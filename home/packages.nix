@@ -9,7 +9,6 @@
     gettext
 
     # Version control
-    git
     gh
 
     # Languages & runtimes

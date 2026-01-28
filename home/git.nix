@@ -1,14 +1,9 @@
 # Git configuration - platform-agnostic
 { pkgs, ... }:
 {
-  home.file.".config/git/attributes" = {
-    text = ''
-      * merge=mergiraf
-    '';
-  };
-
   programs.git = {
     enable = true;
+    attributes = [ "* merge=mergiraf" ];
     ignores = [
       ".DS_STORE"
       "CLAUDE.md"
