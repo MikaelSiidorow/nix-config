@@ -40,7 +40,6 @@
 
     # Databases
     postgresql_18
-    pgadmin4-desktopmode
     redis
 
     # Cloud
