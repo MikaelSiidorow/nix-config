@@ -14,3 +14,7 @@ clean:
 .PHONY: upgrade
 upgrade:
 	nix flake update
+
+.PHONY: fmt
+fmt:
+	nixfmt .

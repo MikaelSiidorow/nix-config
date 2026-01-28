@@ -36,7 +36,7 @@
     uv
 
     # Nix tooling
-    nixfmt-rfc-style
+    nixfmt
 
     # Databases
     postgresql_18
