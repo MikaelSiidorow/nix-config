@@ -1,7 +1,7 @@
 # Default target for macOS
 .PHONY: switch
 switch:
-	darwin-rebuild switch --flake .#MacBook-Air
+	sudo darwin-rebuild switch --flake .#MacBook-Air
 
 # Alias for backwards compatibility
 .PHONY: update
