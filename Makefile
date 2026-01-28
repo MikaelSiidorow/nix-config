@@ -17,4 +17,4 @@ upgrade:
 
 .PHONY: fmt
 fmt:
-	nixfmt .
+	find . -name '*.nix' -exec nixfmt {} +
