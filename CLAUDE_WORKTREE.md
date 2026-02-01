@@ -65,24 +65,40 @@ Benefits:
 
 ### NixOS/Linux Installation
 
-Claude Code is installed via nixpkgs (defined in `home/packages.nix`):
+Claude Code is installed via the [sadjow/claude-code-nix](https://github.com/sadjow/claude-code-nix) flake for automatic updates.
 
+Configuration in `flake.nix`:
+```nix
+inputs = {
+  claude-code-nix = {
+    url = "github:sadjow/claude-code-nix";
+    inputs.nixpkgs.follows = "nixpkgs";
+  };
+};
+```
+
+Usage in `home/packages.nix`:
 ```nix
 home.packages = with pkgs; [
   # ...
-] ++ lib.optionals (!isDarwin) [
-  claude-code  # Available in nixpkgs
+]
+++ lib.optionals (!isDarwin) [
+  claude-code-nix.packages.${pkgs.system}.default
 ];
 ```
 
 Benefits:
+- **Hourly automatic updates** - New releases available within ~1 hour
+- Uses native binary (self-contained, no runtime dependencies)
 - Declarative installation
 - Reproducible across machines
-- Integrated with your Nix configuration
-- Available in official nixpkgs
+- Alternative variants available: Node.js and Bun versions
 
-For always up-to-date versions, you can optionally use the community flake:
-- [sadjow/claude-code-nix](https://github.com/sadjow/claude-code-nix) - Hourly automatic updates with multiple variants (native binary, Node.js, Bun)
+To use a different variant (Node.js or Bun), change `default` to `nodejs` or `bun`:
+```nix
+claude-code-nix.packages.${pkgs.system}.nodejs  # Node.js version
+claude-code-nix.packages.${pkgs.system}.bun     # Bun version
+```
 
 ### Development Installation
 

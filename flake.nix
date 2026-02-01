@@ -32,6 +32,12 @@
       url = "github:homebrew/homebrew-cask";
       flake = false;
     };
+
+    # Claude Code with automatic updates (for NixOS/Linux)
+    claude-code-nix = {
+      url = "github:sadjow/claude-code-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -43,6 +49,7 @@
       nix-homebrew,
       homebrew-core,
       homebrew-cask,
+      claude-code-nix,
       ...
     }@inputs:
     let
@@ -92,7 +99,7 @@
                 useUserPackages = true;
                 backupFileExtension = "backup";
                 extraSpecialArgs = {
-                  inherit inputs;
+                  inherit inputs claude-code-nix;
                   isDarwin = true;
                 };
                 users.${username} = import ./home;
@@ -130,7 +137,7 @@
                 useUserPackages = true;
                 backupFileExtension = "backup";
                 extraSpecialArgs = {
-                  inherit inputs;
+                  inherit inputs claude-code-nix;
                   isDarwin = false;
                 };
                 users.${username} = import ./home;
