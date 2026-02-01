@@ -43,7 +43,7 @@ jobs:
       - name: Check formatting
         run: |
           echo "Running nix fmt..."
-          nix fmt
+          nix fmt .
           if ! git diff --exit-code; then
             echo "❌ Code is not formatted. Run 'make fmt' locally."
             echo ""
