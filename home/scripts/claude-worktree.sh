@@ -30,18 +30,26 @@ usage() {
 Usage: claude-worktree <command> [options]
 
 Commands:
-  <name>              Create a new worktree with the given name (default command)
+  <name>              Create worktree or checkout existing branch (default command)
   list                List all active worktrees
   close <name>        Remove/delete a worktree
 
 Create Options:
   --from <branch>     Base branch to create worktree from (default: origin/main)
+                      Only used when creating a NEW branch
   --no-open          Don't open a new Ghostty window after creation
 
+Branch Behavior:
+  The script intelligently handles existing branches:
+  - If local branch exists: checks it out
+  - If remote branch exists: creates tracking branch
+  - If neither exists: creates new branch from --from option (default: origin/main)
+
 Examples:
-  cwt my-feature                    # Create from origin/main, open in Ghostty
-  cwt my-feature --from origin/dev  # Create from origin/dev
-  cwt my-feature --no-open          # Create without opening Ghostty
+  cwt my-feature                    # Auto-detect or create, open in Ghostty
+  cwt my-feature --from origin/dev  # Create NEW branch from origin/dev
+  cwt existing-branch               # Checkout existing branch in worktree
+  cwt my-feature --no-open          # Create/checkout without opening Ghostty
   cwt list                          # List all worktrees
   cwt close my-feature              # Remove my-feature worktree
 EOF
@@ -259,9 +267,29 @@ cmd_create() {
     log_info "Fetching latest changes from origin..."
     git fetch origin || log_warn "Failed to fetch from origin, continuing anyway..."
 
-    # Create the worktree with a new branch
-    log_info "Creating worktree '$worktree_name' from $base_branch..."
-    git worktree add -b "$worktree_name" "$worktree_dir" "$base_branch"
+    # Check if branch already exists (local or remote)
+    local branch_exists_local=false
+    local branch_exists_remote=false
+
+    if git show-ref --verify --quiet "refs/heads/$worktree_name"; then
+        branch_exists_local=true
+        log_info "Found existing local branch: $worktree_name"
+    elif git show-ref --verify --quiet "refs/remotes/origin/$worktree_name"; then
+        branch_exists_remote=true
+        log_info "Found existing remote branch: origin/$worktree_name"
+    fi
+
+    # Create the worktree, either from existing branch or create new
+    if [ "$branch_exists_local" = true ]; then
+        log_info "Checking out existing local branch '$worktree_name'..."
+        git worktree add "$worktree_dir" "$worktree_name"
+    elif [ "$branch_exists_remote" = true ]; then
+        log_info "Creating local tracking branch for 'origin/$worktree_name'..."
+        git worktree add "$worktree_dir" -b "$worktree_name" "origin/$worktree_name"
+    else
+        log_info "Creating new branch '$worktree_name' from $base_branch..."
+        git worktree add -b "$worktree_name" "$worktree_dir" "$base_branch"
+    fi
 
     # Copy .env file if it exists
     if [ -f "$repo_root/.env" ]; then
@@ -281,6 +309,14 @@ cmd_create() {
     log_info "Worktree created successfully!"
     echo -e "${GREEN}Location:${NC} $worktree_dir"
     echo -e "${GREEN}Branch:${NC} $worktree_name"
+
+    if [ "$branch_exists_local" = true ]; then
+        echo -e "${BLUE}Status:${NC} Checked out existing local branch"
+    elif [ "$branch_exists_remote" = true ]; then
+        echo -e "${BLUE}Status:${NC} Checked out existing remote branch (now tracking)"
+    else
+        echo -e "${BLUE}Status:${NC} Created new branch from $base_branch"
+    fi
 
     # Open Ghostty if requested
     if [ "$open_ghostty" = true ]; then

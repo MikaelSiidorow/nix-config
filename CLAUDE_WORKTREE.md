@@ -7,21 +7,39 @@ The `claude-worktree` command (alias: `cwt`) helps you manage git worktrees for 
 ### Create a Worktree
 
 ```bash
-# Create a new worktree from origin/main
+# Create new worktree or checkout existing branch
 cwt my-feature
 
-# Create from a different branch
+# Create new branch from a different base
 cwt my-feature --from origin/dev
+
+# Checkout existing remote branch
+cwt existing-feature
 
 # Create without opening Ghostty
 cwt my-feature --no-open
 ```
 
-This will:
-1. Create a new git branch named `my-feature`
-2. Create a git worktree in `.claude/worktrees/my-feature`
-3. Copy your `.env` file to the new worktree (if it exists)
-4. Auto-detect your package manager and run the appropriate install command:
+#### Intelligent Branch Detection
+
+The script automatically detects existing branches:
+
+1. **Local branch exists** → Checks it out in the worktree
+2. **Remote branch exists** (e.g., `origin/my-feature`) → Creates local tracking branch
+3. **Neither exists** → Creates new branch from base (default: `origin/main`, or use `--from`)
+
+This allows you to:
+- Continue work on existing feature branches
+- Pull down branches from remote to work on them
+- Create fresh branches for new features
+
+#### What Happens
+
+1. Fetch latest changes from origin
+2. Check for existing branch (local or remote)
+3. Create or checkout the branch in `.claude/worktrees/<name>`
+4. Copy your `.env` file to the new worktree (if it exists)
+5. Auto-detect your package manager and run the appropriate install command:
    - `bun install` for bun.lockb
    - `pnpm install` for pnpm-lock.yaml
    - `yarn install` for yarn.lock
@@ -30,7 +48,7 @@ This will:
    - `go mod download` for go.mod
    - `pip install -r requirements.txt` for requirements.txt
    - `pipenv install` for Pipfile.lock
-5. **Open a new Ghostty window** in the worktree directory (unless `--no-open` is specified)
+6. **Open a new Ghostty window** in the worktree directory (unless `--no-open` is specified)
 
 ### List Worktrees
 
@@ -62,8 +80,46 @@ This will:
 ### Options
 
 **Create command:**
-- `--from <branch>` - Base branch to create from (default: `origin/main`)
+- `--from <branch>` - Base branch to create from (default: `origin/main`, only used for NEW branches)
 - `--no-open` - Skip opening a new Ghostty window
+
+## Example Workflows
+
+### Starting a New Feature
+
+```bash
+# Create a new feature branch from main
+cwt add-dark-mode
+# → Creates new branch 'add-dark-mode' from origin/main
+# → Status: Created new branch from origin/main
+```
+
+### Working on Existing Feature
+
+```bash
+# Someone pushed a branch you want to work on
+cwt fix-auth-bug
+# → Finds origin/fix-auth-bug, creates local tracking branch
+# → Status: Checked out existing remote branch (now tracking)
+```
+
+### Continue Working on Local Branch
+
+```bash
+# You already have a local branch but want it in a worktree
+cwt refactor-api
+# → Checks out your existing local branch
+# → Status: Checked out existing local branch
+```
+
+### Creating from Different Base
+
+```bash
+# Create a hotfix from production branch
+cwt urgent-fix --from origin/production
+# → Creates new branch from origin/production instead of origin/main
+# → Status: Created new branch from origin/production
+```
 
 ## Command Reference
 
