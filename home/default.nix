@@ -13,6 +13,9 @@
   ]
   ++ lib.optionals isDarwin [
     ./skhd.nix
+  ]
+  ++ lib.optionals (!isDarwin) [
+    ./applications-linux.nix
   ];
 
   home = {

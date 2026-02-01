@@ -150,5 +150,26 @@
       #     hostname = "nixos-laptop";
       #   };
       # };
+
+      # Home-manager standalone configurations (for non-NixOS systems)
+      homeConfigurations = {
+        "mikaelsiidorow@pop-os" = home-manager.lib.homeManagerConfiguration {
+          pkgs = nixpkgs.legacyPackages.x86_64-linux;
+          extraSpecialArgs = {
+            inherit inputs;
+            isDarwin = false;
+          };
+          modules = [
+            ./hosts/pop-os
+            ./home
+            {
+              home = {
+                username = username;
+                homeDirectory = "/home/${username}";
+              };
+            }
+          ];
+        };
+      };
     };
 }
