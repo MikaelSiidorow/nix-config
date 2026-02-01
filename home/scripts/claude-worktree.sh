@@ -60,7 +60,7 @@ EOF
 get_repo_root() {
     local root
     root=$(git rev-parse --show-toplevel 2>/dev/null || true)
-    if [ -z "$root" ]; then
+    if [[ -z "$root" ]]; then
         log_error "Not in a git repository"
         exit 1
     fi
@@ -73,7 +73,7 @@ cmd_list() {
     repo_root=$(get_repo_root)
     local worktrees_dir="$repo_root/.claude/worktrees"
 
-    if [ ! -d "$worktrees_dir" ]; then
+    if [[ ! -d "$worktrees_dir" ]]; then
         log_info "No worktrees directory found"
         echo "Run 'cwt <name>' to create your first worktree"
         exit 0
@@ -86,9 +86,14 @@ cmd_list() {
     if git worktree list | grep -q ".claude/worktrees"; then
         git worktree list | grep ".claude/worktrees" | while IFS= read -r line; do
             # Extract just the worktree name from the path
-            local worktree_path=$(echo "$line" | awk '{print $1}')
-            local worktree_name=$(basename "$worktree_path")
-            local branch=$(echo "$line" | grep -oP '\[\K[^\]]+' || echo "detached")
+            local worktree_path
+            worktree_path=$(echo "$line" | awk '{print $1}')
+            local worktree_name
+            worktree_name=$(basename "$worktree_path")
+            local branch
+            # Extract branch name from brackets [branch-name]
+            branch=$(echo "$line" | sed -n 's/.*\[\([^]]*\)\].*/\1/p')
+            [[ -z "$branch" ]] && branch="detached"
             echo -e "  ${BLUE}•${NC} ${GREEN}$worktree_name${NC} ${YELLOW}[$branch]${NC}"
         done
     else
@@ -98,11 +103,13 @@ cmd_list() {
     echo ""
     # Also show directories that might not be tracked by git
     local orphaned=false
+    shopt -s nullglob
     for dir in "$worktrees_dir"/*; do
-        if [ -d "$dir" ]; then
-            local dir_name=$(basename "$dir")
+        if [[ -d "$dir" ]]; then
+            local dir_name
+            dir_name=$(basename "$dir")
             if ! git worktree list | grep -q "$dir_name"; then
-                if [ "$orphaned" = false ]; then
+                if [[ "$orphaned" == false ]]; then
                     log_warn "Orphaned directories (not tracked by git):"
                     orphaned=true
                 fi
@@ -110,11 +117,12 @@ cmd_list() {
             fi
         fi
     done
+    shopt -u nullglob
 }
 
 # Close/remove a worktree
 cmd_close() {
-    if [ $# -ne 1 ]; then
+    if [[ $# -ne 1 ]]; then
         log_error "Usage: cwt close <name>"
         exit 1
     fi
@@ -124,7 +132,7 @@ cmd_close() {
     repo_root=$(get_repo_root)
     local worktree_dir="$repo_root/.claude/worktrees/$worktree_name"
 
-    if [ ! -d "$worktree_dir" ]; then
+    if [[ ! -d "$worktree_dir" ]]; then
         log_error "Worktree '$worktree_name' not found at: $worktree_dir"
         exit 1
     fi
@@ -158,31 +166,31 @@ install_dependencies() {
 
     log_info "Detecting package manager..."
 
-    if [ -f "$worktree_dir/bun.lockb" ]; then
+    if [[ -f "$worktree_dir/bun.lockb" ]]; then
         log_info "Found bun.lockb, running bun install..."
         bun install
-    elif [ -f "$worktree_dir/pnpm-lock.yaml" ]; then
+    elif [[ -f "$worktree_dir/pnpm-lock.yaml" ]]; then
         log_info "Found pnpm-lock.yaml, running pnpm install..."
         pnpm install
-    elif [ -f "$worktree_dir/yarn.lock" ]; then
+    elif [[ -f "$worktree_dir/yarn.lock" ]]; then
         log_info "Found yarn.lock, running yarn install..."
         yarn install
-    elif [ -f "$worktree_dir/package-lock.json" ]; then
+    elif [[ -f "$worktree_dir/package-lock.json" ]]; then
         log_info "Found package-lock.json, running npm install..."
         npm install
-    elif [ -f "$worktree_dir/package.json" ]; then
+    elif [[ -f "$worktree_dir/package.json" ]]; then
         log_warn "Found package.json but no lockfile, running npm install..."
         npm install
-    elif [ -f "$worktree_dir/Cargo.lock" ]; then
+    elif [[ -f "$worktree_dir/Cargo.lock" ]]; then
         log_info "Found Cargo.lock, running cargo build..."
         cargo build
-    elif [ -f "$worktree_dir/go.mod" ]; then
+    elif [[ -f "$worktree_dir/go.mod" ]]; then
         log_info "Found go.mod, running go mod download..."
         go mod download
-    elif [ -f "$worktree_dir/requirements.txt" ]; then
+    elif [[ -f "$worktree_dir/requirements.txt" ]]; then
         log_info "Found requirements.txt, running pip install..."
         pip install -r requirements.txt
-    elif [ -f "$worktree_dir/Pipfile.lock" ]; then
+    elif [[ -f "$worktree_dir/Pipfile.lock" ]]; then
         log_info "Found Pipfile.lock, running pipenv install..."
         pipenv install
     else
@@ -244,7 +252,7 @@ cmd_create() {
     done
 
     # Validate worktree name
-    if [ -z "$worktree_name" ]; then
+    if [[ -z "$worktree_name" ]]; then
         log_error "Worktree name is required"
         usage
     fi
@@ -254,7 +262,7 @@ cmd_create() {
     local worktree_dir="$repo_root/.claude/worktrees/$worktree_name"
 
     # Check if worktree already exists
-    if [ -d "$worktree_dir" ]; then
+    if [[ -d "$worktree_dir" ]]; then
         log_error "Worktree directory already exists: $worktree_dir"
         exit 1
     fi
@@ -280,10 +288,10 @@ cmd_create() {
     fi
 
     # Create the worktree, either from existing branch or create new
-    if [ "$branch_exists_local" = true ]; then
+    if [[ "$branch_exists_local" == true ]]; then
         log_info "Checking out existing local branch '$worktree_name'..."
         git worktree add "$worktree_dir" "$worktree_name"
-    elif [ "$branch_exists_remote" = true ]; then
+    elif [[ "$branch_exists_remote" == true ]]; then
         log_info "Creating local tracking branch for 'origin/$worktree_name'..."
         git worktree add "$worktree_dir" -b "$worktree_name" "origin/$worktree_name"
     else
@@ -292,7 +300,7 @@ cmd_create() {
     fi
 
     # Copy .env file if it exists
-    if [ -f "$repo_root/.env" ]; then
+    if [[ -f "$repo_root/.env" ]]; then
         log_info "Copying .env file..."
         cp "$repo_root/.env" "$worktree_dir/"
     else
@@ -310,16 +318,16 @@ cmd_create() {
     echo -e "${GREEN}Location:${NC} $worktree_dir"
     echo -e "${GREEN}Branch:${NC} $worktree_name"
 
-    if [ "$branch_exists_local" = true ]; then
+    if [[ "$branch_exists_local" == true ]]; then
         echo -e "${BLUE}Status:${NC} Checked out existing local branch"
-    elif [ "$branch_exists_remote" = true ]; then
+    elif [[ "$branch_exists_remote" == true ]]; then
         echo -e "${BLUE}Status:${NC} Checked out existing remote branch (now tracking)"
     else
         echo -e "${BLUE}Status:${NC} Created new branch from $base_branch"
     fi
 
     # Open Ghostty if requested
-    if [ "$open_ghostty" = true ]; then
+    if [[ "$open_ghostty" == true ]]; then
         open_ghostty "$worktree_dir"
     else
         echo -e "${GREEN}Command to enter:${NC} cd $worktree_dir"
@@ -328,7 +336,7 @@ cmd_create() {
 
 # Main command dispatcher
 main() {
-    if [ $# -eq 0 ]; then
+    if [[ $# -eq 0 ]]; then
         usage
     fi
 
