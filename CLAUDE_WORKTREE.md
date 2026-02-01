@@ -2,23 +2,26 @@
 
 ## Quick Start
 
-Use the `claude-worktree` command (alias: `cwt`) to quickly set up a new git worktree for Claude work:
+The `claude-worktree` command (alias: `cwt`) helps you manage git worktrees for Claude development.
+
+### Create a Worktree
 
 ```bash
-# Create a new worktree and open in Ghostty
-claude-worktree my-feature
-
-# Or use the short alias
+# Create a new worktree from origin/main
 cwt my-feature
 
-# Create without opening a new window
+# Create from a different branch
+cwt my-feature --from origin/dev
+
+# Create without opening Ghostty
 cwt my-feature --no-open
 ```
 
 This will:
-1. Create a git worktree in `.claude/worktrees/my-feature` from `origin/main`
-2. Copy your `.env` file to the new worktree (if it exists)
-3. Auto-detect your package manager and run the appropriate install command:
+1. Create a new git branch named `my-feature`
+2. Create a git worktree in `.claude/worktrees/my-feature`
+3. Copy your `.env` file to the new worktree (if it exists)
+4. Auto-detect your package manager and run the appropriate install command:
    - `bun install` for bun.lockb
    - `pnpm install` for pnpm-lock.yaml
    - `yarn install` for yarn.lock
@@ -27,28 +30,62 @@ This will:
    - `go mod download` for go.mod
    - `pip install -r requirements.txt` for requirements.txt
    - `pipenv install` for Pipfile.lock
-4. **Open a new Ghostty window** in the worktree directory (unless `--no-open` is specified)
+5. **Open a new Ghostty window** in the worktree directory (unless `--no-open` is specified)
+
+### List Worktrees
+
+```bash
+# List all active Claude worktrees
+cwt list
+
+# Short alias
+cwt ls
+```
+
+Shows all worktrees in `.claude/worktrees/` with their branch names and detects orphaned directories.
+
+### Close/Remove a Worktree
+
+```bash
+# Remove a worktree
+cwt close my-feature
+
+# Aliases also work
+cwt remove my-feature
+cwt rm my-feature
+```
+
+This will:
+- Remove the worktree directory
+- Optionally prompt to delete the associated branch
 
 ### Options
 
-- `--no-open` - Skip opening a new Ghostty window (useful for scripting or if Ghostty isn't available)
+**Create command:**
+- `--from <branch>` - Base branch to create from (default: `origin/main`)
+- `--no-open` - Skip opening a new Ghostty window
 
-## Clean Up Worktrees
+## Command Reference
 
-To remove a worktree when you're done:
+### Full Command List
 
 ```bash
-# Remove the worktree
-git worktree remove .claude/worktrees/my-feature
-
-# Or remove and clean up even if there are changes
-git worktree remove --force .claude/worktrees/my-feature
+cwt <name> [--from <branch>] [--no-open]  # Create worktree (default)
+cwt list                                   # List all worktrees
+cwt close <name>                          # Remove worktree
+cwt help                                  # Show help
 ```
 
-To list all worktrees:
+### Manual Git Commands
+
+You can also use git directly if needed:
 
 ```bash
+# List all git worktrees (not just Claude ones)
 git worktree list
+
+# Manually remove a worktree
+git worktree remove .claude/worktrees/my-feature --force
 ```
 
 ## Claude Code Installation
@@ -137,3 +174,16 @@ The worktree script is installed as a Nix package in `home/scripts.nix`, making 
 - Available in your PATH automatically
 - Reproducible across machines
 - Managed declaratively with your other packages
+
+## Implementation Notes
+
+### Why Shell Script?
+
+The tool is implemented in Bash because:
+- **No build step required** - Works immediately after installation
+- **Portable** - Runs anywhere with bash (macOS, Linux, etc.)
+- **Fits Nix ecosystem** - Easy to package with `writeShellScriptBin`
+- **Simple dependencies** - Only requires git, bash, and optional package managers
+- **Fast execution** - No runtime startup cost like Node.js or compiled languages
+
+The script is organized with functions and clear separation of concerns, making it maintainable even as complexity grows. For much more complex tooling, consider Rust or TypeScript, but for this workflow automation, shell script is ideal.

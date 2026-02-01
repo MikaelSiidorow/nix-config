@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Claude worktree workflow script
-# Creates a git worktree from origin/main, copies .env, and runs package install
+# Manages git worktrees for Claude development workflow
 
 set -euo pipefail
 
@@ -8,18 +8,10 @@ set -euo pipefail
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-usage() {
-    echo "Usage: claude-worktree <name> [--no-open]"
-    echo "Creates a git worktree in .claude/worktrees/<name> from origin/main"
-    echo "Copies .env file and runs appropriate package install based on lockfile"
-    echo ""
-    echo "Options:"
-    echo "  --no-open    Don't open a new Ghostty window after creation"
-    exit 1
-}
-
+# Logging functions
 log_info() {
     echo -e "${GREEN}[INFO]${NC} $1"
 }
@@ -32,129 +24,300 @@ log_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
-# Parse arguments
-WORKTREE_NAME=""
-OPEN_GHOSTTY=true
+# Usage information
+usage() {
+    cat <<EOF
+Usage: claude-worktree <command> [options]
 
-while [[ $# -gt 0 ]]; do
-    case $1 in
-        --no-open)
-            OPEN_GHOSTTY=false
-            shift
-            ;;
-        -*)
-            echo "Unknown option: $1"
-            usage
-            ;;
-        *)
-            if [ -z "$WORKTREE_NAME" ]; then
-                WORKTREE_NAME="$1"
-            else
-                echo "Too many arguments"
-                usage
+Commands:
+  <name>              Create a new worktree with the given name (default command)
+  list                List all active worktrees
+  close <name>        Remove/delete a worktree
+
+Create Options:
+  --from <branch>     Base branch to create worktree from (default: origin/main)
+  --no-open          Don't open a new Ghostty window after creation
+
+Examples:
+  cwt my-feature                    # Create from origin/main, open in Ghostty
+  cwt my-feature --from origin/dev  # Create from origin/dev
+  cwt my-feature --no-open          # Create without opening Ghostty
+  cwt list                          # List all worktrees
+  cwt close my-feature              # Remove my-feature worktree
+EOF
+    exit 1
+}
+
+# Get repository root
+get_repo_root() {
+    local root
+    root=$(git rev-parse --show-toplevel 2>/dev/null || true)
+    if [ -z "$root" ]; then
+        log_error "Not in a git repository"
+        exit 1
+    fi
+    echo "$root"
+}
+
+# List all worktrees in .claude/worktrees
+cmd_list() {
+    local repo_root
+    repo_root=$(get_repo_root)
+    local worktrees_dir="$repo_root/.claude/worktrees"
+
+    if [ ! -d "$worktrees_dir" ]; then
+        log_info "No worktrees directory found"
+        echo "Run 'cwt <name>' to create your first worktree"
+        exit 0
+    fi
+
+    log_info "Active Claude worktrees:"
+    echo ""
+
+    # Use git worktree list and filter for .claude/worktrees
+    if git worktree list | grep -q ".claude/worktrees"; then
+        git worktree list | grep ".claude/worktrees" | while IFS= read -r line; do
+            # Extract just the worktree name from the path
+            local worktree_path=$(echo "$line" | awk '{print $1}')
+            local worktree_name=$(basename "$worktree_path")
+            local branch=$(echo "$line" | grep -oP '\[\K[^\]]+' || echo "detached")
+            echo -e "  ${BLUE}•${NC} ${GREEN}$worktree_name${NC} ${YELLOW}[$branch]${NC}"
+        done
+    else
+        echo "  No active worktrees found"
+    fi
+
+    echo ""
+    # Also show directories that might not be tracked by git
+    local orphaned=false
+    for dir in "$worktrees_dir"/*; do
+        if [ -d "$dir" ]; then
+            local dir_name=$(basename "$dir")
+            if ! git worktree list | grep -q "$dir_name"; then
+                if [ "$orphaned" = false ]; then
+                    log_warn "Orphaned directories (not tracked by git):"
+                    orphaned=true
+                fi
+                echo -e "  ${YELLOW}•${NC} $dir_name ${RED}[orphaned - use 'rm -rf' to remove]${NC}"
             fi
-            shift
-            ;;
-    esac
-done
+        fi
+    done
+}
 
-# Check if worktree name was provided
-if [ -z "$WORKTREE_NAME" ]; then
-    usage
-fi
-REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || true)
+# Close/remove a worktree
+cmd_close() {
+    if [ $# -ne 1 ]; then
+        log_error "Usage: cwt close <name>"
+        exit 1
+    fi
 
-if [ -z "$REPO_ROOT" ]; then
-    log_error "Not in a git repository"
-    exit 1
-fi
+    local worktree_name="$1"
+    local repo_root
+    repo_root=$(get_repo_root)
+    local worktree_dir="$repo_root/.claude/worktrees/$worktree_name"
 
-WORKTREE_DIR="$REPO_ROOT/.claude/worktrees/$WORKTREE_NAME"
+    if [ ! -d "$worktree_dir" ]; then
+        log_error "Worktree '$worktree_name' not found at: $worktree_dir"
+        exit 1
+    fi
 
-# Check if worktree already exists
-if [ -d "$WORKTREE_DIR" ]; then
-    log_error "Worktree directory already exists: $WORKTREE_DIR"
-    exit 1
-fi
+    log_info "Removing worktree: $worktree_name"
 
-# Create .claude/worktrees directory if it doesn't exist
-log_info "Creating .claude/worktrees directory..."
-mkdir -p "$REPO_ROOT/.claude/worktrees"
+    # Remove the worktree (--force to handle uncommitted changes)
+    if git worktree remove "$worktree_dir" --force 2>/dev/null; then
+        log_info "Worktree removed successfully"
+    else
+        # If git worktree remove fails, try manual cleanup
+        log_warn "Git worktree remove failed, cleaning up manually..."
+        rm -rf "$worktree_dir"
+        log_info "Directory removed"
+    fi
 
-# Fetch latest changes from origin
-log_info "Fetching latest changes from origin..."
-git fetch origin main || log_warn "Failed to fetch origin/main, continuing anyway..."
+    # Optionally delete the branch if it exists and matches the worktree name
+    if git show-ref --verify --quiet "refs/heads/$worktree_name"; then
+        read -p "Delete branch '$worktree_name' as well? [y/N] " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            git branch -D "$worktree_name"
+            log_info "Branch '$worktree_name' deleted"
+        fi
+    fi
+}
 
-# Create the worktree
-log_info "Creating worktree from origin/main..."
-git worktree add "$WORKTREE_DIR" origin/main
+# Detect package manager and install dependencies
+install_dependencies() {
+    local worktree_dir="$1"
 
-# Copy .env file if it exists
-if [ -f "$REPO_ROOT/.env" ]; then
-    log_info "Copying .env file..."
-    cp "$REPO_ROOT/.env" "$WORKTREE_DIR/"
-else
-    log_warn "No .env file found in repository root"
-fi
+    log_info "Detecting package manager..."
 
-# Change to worktree directory
-cd "$WORKTREE_DIR"
+    if [ -f "$worktree_dir/bun.lockb" ]; then
+        log_info "Found bun.lockb, running bun install..."
+        bun install
+    elif [ -f "$worktree_dir/pnpm-lock.yaml" ]; then
+        log_info "Found pnpm-lock.yaml, running pnpm install..."
+        pnpm install
+    elif [ -f "$worktree_dir/yarn.lock" ]; then
+        log_info "Found yarn.lock, running yarn install..."
+        yarn install
+    elif [ -f "$worktree_dir/package-lock.json" ]; then
+        log_info "Found package-lock.json, running npm install..."
+        npm install
+    elif [ -f "$worktree_dir/package.json" ]; then
+        log_warn "Found package.json but no lockfile, running npm install..."
+        npm install
+    elif [ -f "$worktree_dir/Cargo.lock" ]; then
+        log_info "Found Cargo.lock, running cargo build..."
+        cargo build
+    elif [ -f "$worktree_dir/go.mod" ]; then
+        log_info "Found go.mod, running go mod download..."
+        go mod download
+    elif [ -f "$worktree_dir/requirements.txt" ]; then
+        log_info "Found requirements.txt, running pip install..."
+        pip install -r requirements.txt
+    elif [ -f "$worktree_dir/Pipfile.lock" ]; then
+        log_info "Found Pipfile.lock, running pipenv install..."
+        pipenv install
+    else
+        log_warn "No recognized package manager lockfile found"
+    fi
+}
 
-# Detect lockfile and run appropriate install command
-log_info "Detecting package manager..."
+# Open Ghostty window
+open_ghostty() {
+    local worktree_dir="$1"
 
-if [ -f "bun.lockb" ]; then
-    log_info "Found bun.lockb, running bun install..."
-    bun install
-elif [ -f "pnpm-lock.yaml" ]; then
-    log_info "Found pnpm-lock.yaml, running pnpm install..."
-    pnpm install
-elif [ -f "yarn.lock" ]; then
-    log_info "Found yarn.lock, running yarn install..."
-    yarn install
-elif [ -f "package-lock.json" ]; then
-    log_info "Found package-lock.json, running npm install..."
-    npm install
-elif [ -f "package.json" ]; then
-    log_warn "Found package.json but no lockfile, running npm install..."
-    npm install
-elif [ -f "Cargo.lock" ]; then
-    log_info "Found Cargo.lock, running cargo build..."
-    cargo build
-elif [ -f "go.mod" ]; then
-    log_info "Found go.mod, running go mod download..."
-    go mod download
-elif [ -f "requirements.txt" ]; then
-    log_info "Found requirements.txt, running pip install..."
-    pip install -r requirements.txt
-elif [ -f "Pipfile.lock" ]; then
-    log_info "Found Pipfile.lock, running pipenv install..."
-    pipenv install
-else
-    log_warn "No recognized package manager lockfile found"
-fi
-
-echo ""
-log_info "Worktree created successfully!"
-echo -e "${GREEN}Location:${NC} $WORKTREE_DIR"
-
-# Open Ghostty window if requested and available
-if [ "$OPEN_GHOSTTY" = true ]; then
     if command -v ghostty &> /dev/null; then
         log_info "Opening new Ghostty window..."
-        # Detect OS for appropriate Ghostty invocation
         if [[ "$OSTYPE" == "darwin"* ]]; then
             # macOS: Use open command to launch Ghostty
-            open -na Ghostty --args --working-directory="$WORKTREE_DIR"
+            open -na Ghostty --args --working-directory="$worktree_dir"
         else
             # Linux: Launch Ghostty directly in background
-            nohup ghostty --working-directory="$WORKTREE_DIR" &>/dev/null &
+            nohup ghostty --working-directory="$worktree_dir" &>/dev/null &
         fi
         echo -e "${GREEN}New Ghostty window opened${NC}"
     else
         log_warn "Ghostty not found, skipping window open"
-        echo -e "${GREEN}Command to enter:${NC} cd $WORKTREE_DIR"
+        echo -e "${GREEN}Command to enter:${NC} cd $worktree_dir"
     fi
-else
-    echo -e "${GREEN}Command to enter:${NC} cd $WORKTREE_DIR"
-fi
+}
+
+# Create a new worktree
+cmd_create() {
+    local worktree_name=""
+    local base_branch="origin/main"
+    local open_ghostty=true
+
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --from)
+                base_branch="$2"
+                shift 2
+                ;;
+            --no-open)
+                open_ghostty=false
+                shift
+                ;;
+            -*)
+                log_error "Unknown option: $1"
+                usage
+                ;;
+            *)
+                if [ -z "$worktree_name" ]; then
+                    worktree_name="$1"
+                else
+                    log_error "Too many arguments"
+                    usage
+                fi
+                shift
+                ;;
+        esac
+    done
+
+    # Validate worktree name
+    if [ -z "$worktree_name" ]; then
+        log_error "Worktree name is required"
+        usage
+    fi
+
+    local repo_root
+    repo_root=$(get_repo_root)
+    local worktree_dir="$repo_root/.claude/worktrees/$worktree_name"
+
+    # Check if worktree already exists
+    if [ -d "$worktree_dir" ]; then
+        log_error "Worktree directory already exists: $worktree_dir"
+        exit 1
+    fi
+
+    # Create .claude/worktrees directory if it doesn't exist
+    log_info "Creating .claude/worktrees directory..."
+    mkdir -p "$repo_root/.claude/worktrees"
+
+    # Fetch latest changes from origin
+    log_info "Fetching latest changes from origin..."
+    git fetch origin || log_warn "Failed to fetch from origin, continuing anyway..."
+
+    # Create the worktree with a new branch
+    log_info "Creating worktree '$worktree_name' from $base_branch..."
+    git worktree add -b "$worktree_name" "$worktree_dir" "$base_branch"
+
+    # Copy .env file if it exists
+    if [ -f "$repo_root/.env" ]; then
+        log_info "Copying .env file..."
+        cp "$repo_root/.env" "$worktree_dir/"
+    else
+        log_warn "No .env file found in repository root"
+    fi
+
+    # Change to worktree directory for package installation
+    cd "$worktree_dir"
+
+    # Install dependencies
+    install_dependencies "$worktree_dir"
+
+    echo ""
+    log_info "Worktree created successfully!"
+    echo -e "${GREEN}Location:${NC} $worktree_dir"
+    echo -e "${GREEN}Branch:${NC} $worktree_name"
+
+    # Open Ghostty if requested
+    if [ "$open_ghostty" = true ]; then
+        open_ghostty "$worktree_dir"
+    else
+        echo -e "${GREEN}Command to enter:${NC} cd $worktree_dir"
+    fi
+}
+
+# Main command dispatcher
+main() {
+    if [ $# -eq 0 ]; then
+        usage
+    fi
+
+    local command="$1"
+    shift
+
+    case "$command" in
+        list|ls)
+            cmd_list "$@"
+            ;;
+        close|remove|rm)
+            cmd_close "$@"
+            ;;
+        help|--help|-h)
+            usage
+            ;;
+        -*)
+            # Options without command, treat as create
+            cmd_create "$command" "$@"
+            ;;
+        *)
+            # Default to create command
+            cmd_create "$command" "$@"
+            ;;
+    esac
+}
+
+main "$@"
