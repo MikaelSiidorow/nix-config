@@ -1,5 +1,5 @@
 # Common packages - platform-agnostic
-{ pkgs, ... }:
+{ pkgs, lib, isDarwin ? false, ... }:
 {
   programs.bat = {
     enable = true;
@@ -60,5 +60,9 @@
 
     # Security
     _1password-cli
+
+    # AI tools (NixOS/Linux only - macOS uses Homebrew)
+  ] ++ lib.optionals (!isDarwin) [
+    claude-code
   ];
 }

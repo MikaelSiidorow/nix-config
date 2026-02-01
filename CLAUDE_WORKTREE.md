@@ -45,9 +45,11 @@ git worktree list
 
 ## Claude Code Installation
 
-### Current Setup (macOS)
+This configuration supports Claude Code on both macOS and NixOS/Linux:
 
-Claude Code is currently installed via Homebrew Cask (defined in `modules/darwin/homebrew.nix`):
+### macOS Installation
+
+Claude Code is installed via Homebrew Cask (defined in `modules/darwin/homebrew.nix:33`):
 
 ```nix
 casks = [
@@ -56,27 +58,31 @@ casks = [
 ];
 ```
 
-This is the recommended approach for macOS as it:
-- Gets automatic updates via Homebrew
-- Uses the official distribution method
-- Integrates well with macOS
+Benefits:
+- Automatic updates via Homebrew
+- Official distribution method from Anthropic
+- Native macOS integration
 
-### Alternative: Nix Package (Linux)
+### NixOS/Linux Installation
 
-For NixOS or Linux systems, you can install Claude Code via nixpkgs by adding it to `home/packages.nix`:
+Claude Code is installed via nixpkgs (defined in `home/packages.nix`):
 
 ```nix
 home.packages = with pkgs; [
   # ...
-  # Note: Check if claude-code is available in nixpkgs
-  # If not, you may need to build from source or use the official installer
+] ++ lib.optionals (!isDarwin) [
+  claude-code  # Available in nixpkgs
 ];
 ```
 
-Currently, Claude Code may not be in nixpkgs, so you might need to:
-1. Use the official installer from Anthropic
-2. Create a custom derivation
-3. Stick with Homebrew on macOS (recommended)
+Benefits:
+- Declarative installation
+- Reproducible across machines
+- Integrated with your Nix configuration
+- Available in official nixpkgs
+
+For always up-to-date versions, you can optionally use the community flake:
+- [sadjow/claude-code-nix](https://github.com/sadjow/claude-code-nix) - Hourly automatic updates with multiple variants (native binary, Node.js, Bun)
 
 ### Development Installation
 
