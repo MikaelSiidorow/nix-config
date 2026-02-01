@@ -107,7 +107,7 @@ deep-clean:
 .PHONY: fmt
 fmt:
 	@echo "Formatting nix files..."
-	nix fmt .
+	nix fmt
 
 # Host-specific targets
 .PHONY: mac
