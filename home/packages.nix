@@ -61,8 +61,12 @@
     # Security
     _1password-cli
   ]
-  # AI tools (NixOS/Linux only - macOS uses Homebrew)
+  # Platform-specific packages (NixOS/Linux only - macOS uses Homebrew)
   ++ lib.optionals (!isDarwin) [
+    # AI tools
     claude-code-nix.packages.${pkgs.system}.default
+
+    # Terminal
+    ghostty
   ];
 }

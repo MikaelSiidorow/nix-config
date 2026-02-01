@@ -5,11 +5,14 @@
 Use the `claude-worktree` command (alias: `cwt`) to quickly set up a new git worktree for Claude work:
 
 ```bash
-# Create a new worktree
+# Create a new worktree and open in Ghostty
 claude-worktree my-feature
 
 # Or use the short alias
 cwt my-feature
+
+# Create without opening a new window
+cwt my-feature --no-open
 ```
 
 This will:
@@ -24,6 +27,11 @@ This will:
    - `go mod download` for go.mod
    - `pip install -r requirements.txt` for requirements.txt
    - `pipenv install` for Pipfile.lock
+4. **Open a new Ghostty window** in the worktree directory (unless `--no-open` is specified)
+
+### Options
+
+- `--no-open` - Skip opening a new Ghostty window (useful for scripting or if Ghostty isn't available)
 
 ## Clean Up Worktrees
 
@@ -99,6 +107,29 @@ To use a different variant (Node.js or Bun), change `default` to `nodejs` or `bu
 claude-code-nix.packages.${pkgs.system}.nodejs  # Node.js version
 claude-code-nix.packages.${pkgs.system}.bun     # Bun version
 ```
+
+### Ghostty Terminal Installation
+
+Ghostty is installed on both platforms for the integrated workflow:
+
+**macOS**: Installed via Homebrew Cask (`modules/darwin/homebrew.nix:24`)
+```nix
+casks = [
+  "ghostty"
+];
+```
+
+**NixOS/Linux**: Installed via nixpkgs (`home/packages.nix`)
+```nix
+++ lib.optionals (!isDarwin) [
+  ghostty
+];
+```
+
+The worktree script automatically:
+- Detects if Ghostty is available
+- Opens a new Ghostty window in the worktree directory
+- Falls back gracefully if Ghostty isn't installed
 
 ### Development Installation
 

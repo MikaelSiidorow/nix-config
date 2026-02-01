@@ -11,9 +11,12 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 usage() {
-    echo "Usage: claude-worktree <name>"
+    echo "Usage: claude-worktree <name> [--no-open]"
     echo "Creates a git worktree in .claude/worktrees/<name> from origin/main"
     echo "Copies .env file and runs appropriate package install based on lockfile"
+    echo ""
+    echo "Options:"
+    echo "  --no-open    Don't open a new Ghostty window after creation"
     exit 1
 }
 
@@ -29,12 +32,36 @@ log_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
-# Check arguments
-if [ $# -ne 1 ]; then
+# Parse arguments
+WORKTREE_NAME=""
+OPEN_GHOSTTY=true
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --no-open)
+            OPEN_GHOSTTY=false
+            shift
+            ;;
+        -*)
+            echo "Unknown option: $1"
+            usage
+            ;;
+        *)
+            if [ -z "$WORKTREE_NAME" ]; then
+                WORKTREE_NAME="$1"
+            else
+                echo "Too many arguments"
+                usage
+            fi
+            shift
+            ;;
+    esac
+done
+
+# Check if worktree name was provided
+if [ -z "$WORKTREE_NAME" ]; then
     usage
 fi
-
-WORKTREE_NAME="$1"
 REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || true)
 
 if [ -z "$REPO_ROOT" ]; then
@@ -110,4 +137,24 @@ fi
 echo ""
 log_info "Worktree created successfully!"
 echo -e "${GREEN}Location:${NC} $WORKTREE_DIR"
-echo -e "${GREEN}Command to enter:${NC} cd $WORKTREE_DIR"
+
+# Open Ghostty window if requested and available
+if [ "$OPEN_GHOSTTY" = true ]; then
+    if command -v ghostty &> /dev/null; then
+        log_info "Opening new Ghostty window..."
+        # Detect OS for appropriate Ghostty invocation
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            # macOS: Use open command to launch Ghostty
+            open -na Ghostty --args --working-directory="$WORKTREE_DIR"
+        else
+            # Linux: Launch Ghostty directly in background
+            nohup ghostty --working-directory="$WORKTREE_DIR" &>/dev/null &
+        fi
+        echo -e "${GREEN}New Ghostty window opened${NC}"
+    else
+        log_warn "Ghostty not found, skipping window open"
+        echo -e "${GREEN}Command to enter:${NC} cd $WORKTREE_DIR"
+    fi
+else
+    echo -e "${GREEN}Command to enter:${NC} cd $WORKTREE_DIR"
+fi
