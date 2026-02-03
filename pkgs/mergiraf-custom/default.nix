@@ -50,45 +50,45 @@ rustPlatform.buildRustPackage {
   # so the vendored deps are identical to stock mergiraf.
   cargoHash = "sha256-F6YtOgcAR4fN33j7Ae4ixhTfNctUfgkV3t1I7XJzHHw=";
 
-  postPatch = ''
-    # Write the PO LangProfile to a temp file (indented to match upstream style)
-    cat > po_profile_fragment.rs << 'RUST'
-            LangProfile {
-                name: "PO",
-                alternate_names: &["gettext"],
-                extensions: vec!["po", "pot"],
-                file_names: vec![],
-                language: tree_sitter_po::LANGUAGE.into(),
-                atomic_nodes: vec!["string"],
-                commutative_parents: vec![
-                    CommutativeParent::without_delimiters("source_file", "\n\n"),
-                ],
-                signatures: vec![signature("message", vec![vec![ChildKind("msgid")]])],
-                injections: None,
-                flattened_nodes: &[],
-                comment_nodes: &[
-                    "translator_comment",
-                    "extracted_comment",
-                    "reference_comment",
-                    "flag_comment",
-                    "previous_comment",
-                    "obsolete_comment",
-                ],
-            },
-    RUST
-
-    # Insert the PO LangProfile before the closing `]` of the SUPPORTED_LANGUAGES vec.
-    # The vec ends with `    ]\n});` — we match `    ]` (4-space indented closing bracket).
-    awk '
-      /^    \]$/ && !inserted {
-        while ((getline line < "po_profile_fragment.rs") > 0) print line;
-        inserted = 1
-      }
-      { print }
-    ' src/supported_langs.rs > src/supported_langs.rs.tmp
-    mv src/supported_langs.rs.tmp src/supported_langs.rs
-    rm po_profile_fragment.rs
-  '';
+  postPatch =
+    let
+      # Unique marker: the vec closing `    ]` followed by `});` only appears once
+      # (closing the SUPPORTED_LANGUAGES LazyLock). Earlier `]` at the same indent
+      # are followed by `.concat();` or have semicolons.
+      vecClose = ''
+            ]
+        });'';
+      poProfile = ''
+                LangProfile {
+                    name: "PO",
+                    alternate_names: &["gettext"],
+                    extensions: vec!["po", "pot"],
+                    file_names: vec![],
+                    language: tree_sitter_po::LANGUAGE.into(),
+                    atomic_nodes: vec!["string"],
+                    commutative_parents: vec![
+                        CommutativeParent::without_delimiters("source_file", "\n\n"),
+                    ],
+                    signatures: vec![signature("message", vec![vec![ChildKind("msgid")]])],
+                    injections: None,
+                    flattened_nodes: &[],
+                    comment_nodes: &[
+                        "translator_comment",
+                        "extracted_comment",
+                        "reference_comment",
+                        "flag_comment",
+                        "previous_comment",
+                        "obsolete_comment",
+                    ],
+                },
+            ]
+        });'';
+    in
+    ''
+      substituteInPlace src/supported_langs.rs --replace-fail \
+        ${lib.escapeShellArg vecClose} \
+        ${lib.escapeShellArg poProfile}
+    '';
 
   # Cargo.toml/Lock modifications happen in preBuild (after the cargoSetupPostPatchHook
   # validation) so the vendor Cargo.lock matches the unmodified source Cargo.lock.
