@@ -16,10 +16,6 @@
           "named": true
         },
         {
-          "type": "obsolete_comment",
-          "named": true
-        },
-        {
           "type": "previous_comment",
           "named": true
         },
@@ -179,11 +175,11 @@
       "required": false,
       "types": [
         {
-          "type": "comment",
+          "type": "message",
           "named": true
         },
         {
-          "type": "message",
+          "type": "obsolete_comment",
           "named": true
         }
       ]
