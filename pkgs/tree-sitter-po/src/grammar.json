@@ -13,7 +13,7 @@
           },
           {
             "type": "SYMBOL",
-            "name": "comment"
+            "name": "obsolete_comment"
           },
           {
             "type": "SYMBOL",
@@ -85,10 +85,6 @@
     "comment": {
       "type": "CHOICE",
       "members": [
-        {
-          "type": "SYMBOL",
-          "name": "obsolete_comment"
-        },
         {
           "type": "SYMBOL",
           "name": "translator_comment"
@@ -493,12 +489,7 @@
       "value": "[ \\t]"
     }
   ],
-  "conflicts": [
-    [
-      "source_file",
-      "message"
-    ]
-  ],
+  "conflicts": [],
   "precedences": [],
   "externals": [],
   "inline": [],

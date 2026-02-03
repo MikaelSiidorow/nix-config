@@ -6,14 +6,17 @@ module.exports = grammar({
 
   extras: (_$) => [/[ \t]/],
 
-  conflicts: ($) => [[$.source_file, $.message]],
+  // No conflicts — the grammar is fully deterministic.
+  // Comments only appear as children of `message`, never at the top level,
+  // so there is no ambiguity about ownership.
 
   rules: {
-    source_file: ($) => repeat(choice($.message, $.comment, $._newline)),
+    source_file: ($) =>
+      repeat(choice($.message, $.obsolete_comment, $._newline)),
 
     _newline: (_$) => /\r?\n/,
 
-    // Each keyword block handles its own continuation strings and trailing newline.
+    // A message owns its leading comments and all keyword blocks.
     message: ($) =>
       seq(
         repeat($.comment),
@@ -23,9 +26,9 @@ module.exports = grammar({
         choice($.msgstr, repeat1($.msgstr_plural)),
       ),
 
+    // Comments that can precede a message (not obsolete — those are separate).
     comment: ($) =>
       choice(
-        $.obsolete_comment,
         $.translator_comment,
         $.extracted_comment,
         $.reference_comment,
@@ -46,17 +49,18 @@ module.exports = grammar({
     obsolete_comment: ($) =>
       seq("#~", optional(seq(" ", /[^\n]*/)), $._newline),
 
-    msgctxt: ($) => seq("msgctxt", $._string_line, repeat($._continuation_line)),
-    msgid: ($) => seq("msgid", $._string_line, repeat($._continuation_line)),
-    msgid_plural: ($) => seq("msgid_plural", $._string_line, repeat($._continuation_line)),
-    msgstr: ($) => seq("msgstr", $._string_line, repeat($._continuation_line)),
+    msgctxt: ($) =>
+      seq("msgctxt", $._string_line, repeat($._continuation_line)),
+    msgid: ($) =>
+      seq("msgid", $._string_line, repeat($._continuation_line)),
+    msgid_plural: ($) =>
+      seq("msgid_plural", $._string_line, repeat($._continuation_line)),
+    msgstr: ($) =>
+      seq("msgstr", $._string_line, repeat($._continuation_line)),
     msgstr_plural: ($) =>
       seq("msgstr[", /[0-9]+/, "]", $._string_line, repeat($._continuation_line)),
 
-    // A string followed by a newline
     _string_line: ($) => seq($.string, $._newline),
-
-    // A continuation line: a string at the start of a line (after optional whitespace) followed by newline
     _continuation_line: ($) => seq($.string, $._newline),
 
     string: (_$) =>
