@@ -31,32 +31,14 @@ let
 
   treeSitterPoSrc = ../tree-sitter-po;
 
-  # Combined source: mergiraf + tree-sitter-po + Cargo.toml/Lock modifications
+  # Combined source: mergiraf + tree-sitter-po directory (Cargo.toml/Lock unmodified
+  # so that fetchCargoVendor validation passes with the upstream cargoHash)
   src = runCommand "mergiraf-po-src" { } ''
     cp -r ${mergirafSrc} $out
     chmod -R u+w $out
 
     # Copy tree-sitter-po grammar into the source tree
     cp -r ${treeSitterPoSrc} $out/tree-sitter-po
-
-    # Add tree-sitter-po dependency to Cargo.toml
-    sed -i '/^tree-sitter-starlark/a tree-sitter-po = { path = "./tree-sitter-po" }' $out/Cargo.toml
-
-    # Add tree-sitter-po to mergiraf's dependency list in Cargo.lock
-    # (insert alphabetically between tree-sitter-php and tree-sitter-properties)
-    sed -i '/ "tree-sitter-php",$/a \ "tree-sitter-po",' $out/Cargo.lock
-
-    # Add tree-sitter-po package entry to Cargo.lock
-    cat >> $out/Cargo.lock << 'LOCKEOF'
-
-[[package]]
-name = "tree-sitter-po"
-version = "0.1.0"
-dependencies = [
- "cc",
- "tree-sitter-language",
-]
-LOCKEOF
   '';
 
 in
@@ -64,8 +46,8 @@ rustPlatform.buildRustPackage {
   pname = "mergiraf";
   inherit version src;
 
-  # tree-sitter-po is a path dependency; its transitive deps (cc, tree-sitter-language)
-  # are already in mergiraf's dependency tree, so the vendor output is unchanged.
+  # Unchanged from upstream — Cargo.toml/Lock are unmodified at vendor time,
+  # so the vendored deps are identical to stock mergiraf.
   cargoHash = "sha256-F6YtOgcAR4fN33j7Ae4ixhTfNctUfgkV3t1I7XJzHHw=";
 
   postPatch = ''
@@ -106,6 +88,26 @@ rustPlatform.buildRustPackage {
     ' src/supported_langs.rs > src/supported_langs.rs.tmp
     mv src/supported_langs.rs.tmp src/supported_langs.rs
     rm po_profile_fragment.rs
+  '';
+
+  # Cargo.toml/Lock modifications happen in preBuild (after the cargoSetupPostPatchHook
+  # validation) so the vendor Cargo.lock matches the unmodified source Cargo.lock.
+  # Path deps aren't vendored, so cargo resolves tree-sitter-po from the source tree.
+  preBuild = ''
+    sed -i '/^tree-sitter-starlark/a tree-sitter-po = { path = "./tree-sitter-po" }' Cargo.toml
+
+    sed -i '/ "tree-sitter-php",$/a \ "tree-sitter-po",' Cargo.lock
+
+    cat >> Cargo.lock << 'LOCKEOF'
+
+[[package]]
+name = "tree-sitter-po"
+version = "0.1.0"
+dependencies = [
+ "cc",
+ "tree-sitter-language",
+]
+LOCKEOF
   '';
 
   cargoBuildFlags = [
