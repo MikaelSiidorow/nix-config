@@ -4,19 +4,14 @@
 module.exports = grammar({
   name: "po",
 
-  extras: (_$) => [/[ \t]/],
-
-  // No conflicts — the grammar is fully deterministic.
-  // Comments only appear as children of `message`, never at the top level,
-  // so there is no ambiguity about ownership.
+  // Newlines in extras: they don't create tree nodes, so mergiraf's tree
+  // diffing operates on a compact tree of just messages and their parts.
+  extras: (_$) => [/[ \t]/, /\r?\n/],
 
   rules: {
     source_file: ($) =>
-      repeat(choice($.message, $.obsolete_comment, $._newline)),
+      repeat(choice($.message, $.obsolete_comment)),
 
-    _newline: (_$) => /\r?\n/,
-
-    // A message owns its leading comments and all keyword blocks.
     message: ($) =>
       seq(
         repeat($.comment),
@@ -26,7 +21,6 @@ module.exports = grammar({
         choice($.msgstr, repeat1($.msgstr_plural)),
       ),
 
-    // Comments that can precede a message (not obsolete — those are separate).
     comment: ($) =>
       choice(
         $.translator_comment,
@@ -36,45 +30,46 @@ module.exports = grammar({
         $.previous_comment,
       ),
 
-    translator_comment: ($) =>
-      seq("#", optional(seq(" ", /[^.,:|~\n][^\n]*/)), $._newline),
-    extracted_comment: ($) =>
-      seq("#.", optional(seq(" ", /[^\n]*/)), $._newline),
-    reference_comment: ($) =>
-      seq("#:", optional(seq(" ", /[^\n]*/)), $._newline),
-    flag_comment: ($) =>
-      seq("#,", optional(seq(" ", /[^\n]*/)), $._newline),
-    previous_comment: ($) =>
-      seq("#|", optional(seq(" ", /[^\n]*/)), $._newline),
-    obsolete_comment: ($) =>
-      seq("#~", optional(seq(" ", /[^\n]*/)), $._newline),
+    // Each comment type is a single token (including its trailing newline)
+    // so the lexer handles them atomically. The newline inside token() is
+    // matched literally (extras don't apply inside token()).
+    translator_comment: (_$) =>
+      token(seq("#", optional(seq(" ", /[^\n]*/)), /\r?\n/)),
+    extracted_comment: (_$) =>
+      token(seq("#.", optional(seq(" ", /[^\n]*/)), /\r?\n/)),
+    reference_comment: (_$) =>
+      token(seq("#:", optional(seq(" ", /[^\n]*/)), /\r?\n/)),
+    flag_comment: (_$) =>
+      token(seq("#,", optional(seq(" ", /[^\n]*/)), /\r?\n/)),
+    previous_comment: (_$) =>
+      token(seq("#|", optional(seq(" ", /[^\n]*/)), /\r?\n/)),
+    obsolete_comment: (_$) =>
+      token(seq("#~", optional(seq(" ", /[^\n]*/)), /\r?\n/)),
 
-    msgctxt: ($) =>
-      seq("msgctxt", $._string_line, repeat($._continuation_line)),
-    msgid: ($) =>
-      seq("msgid", $._string_line, repeat($._continuation_line)),
-    msgid_plural: ($) =>
-      seq("msgid_plural", $._string_line, repeat($._continuation_line)),
-    msgstr: ($) =>
-      seq("msgstr", $._string_line, repeat($._continuation_line)),
+    // Keyword blocks: the keyword followed by one or more strings.
+    // Newlines between continuation strings are consumed by extras.
+    msgctxt: ($) => seq("msgctxt", repeat1($.string)),
+    msgid: ($) => seq("msgid", repeat1($.string)),
+    msgid_plural: ($) => seq("msgid_plural", repeat1($.string)),
+    msgstr: ($) => seq("msgstr", repeat1($.string)),
     msgstr_plural: ($) =>
-      seq("msgstr[", /[0-9]+/, "]", $._string_line, repeat($._continuation_line)),
+      seq("msgstr[", /[0-9]+/, "]", repeat1($.string)),
 
-    _string_line: ($) => seq($.string, $._newline),
-    _continuation_line: ($) => seq($.string, $._newline),
-
+    // A string is a single token — no child nodes, minimal tree overhead.
     string: (_$) =>
-      seq(
-        '"',
-        repeat(
-          choice(
-            /\\[\\'"abtnvfr]/,
-            /\\[0-7]{1,3}/,
-            /\\x[0-9a-fA-F]{2}/,
-            /[^\\"\n]+/,
+      token(
+        seq(
+          '"',
+          repeat(
+            choice(
+              /\\[\\'"abtnvfr]/,
+              /\\[0-7]{1,3}/,
+              /\\x[0-9a-fA-F]{2}/,
+              /[^\\"\n]+/,
+            ),
           ),
+          '"',
         ),
-        '"',
       ),
   },
 });

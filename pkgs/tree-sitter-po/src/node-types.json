@@ -31,16 +31,6 @@
     }
   },
   {
-    "type": "extracted_comment",
-    "named": true,
-    "fields": {}
-  },
-  {
-    "type": "flag_comment",
-    "named": true,
-    "fields": {}
-  },
-  {
     "type": "message",
     "named": true,
     "fields": {},
@@ -151,21 +141,6 @@
     }
   },
   {
-    "type": "obsolete_comment",
-    "named": true,
-    "fields": {}
-  },
-  {
-    "type": "previous_comment",
-    "named": true,
-    "fields": {}
-  },
-  {
-    "type": "reference_comment",
-    "named": true,
-    "fields": {}
-  },
-  {
     "type": "source_file",
     "named": true,
     "root": true,
@@ -186,50 +161,16 @@
     }
   },
   {
-    "type": "string",
-    "named": true,
-    "fields": {}
-  },
-  {
-    "type": "translator_comment",
-    "named": true,
-    "fields": {}
-  },
-  {
-    "type": " ",
-    "named": false
-  },
-  {
-    "type": "\"",
-    "named": false
-  },
-  {
-    "type": "#",
-    "named": false
-  },
-  {
-    "type": "#,",
-    "named": false
-  },
-  {
-    "type": "#.",
-    "named": false
-  },
-  {
-    "type": "#:",
-    "named": false
-  },
-  {
-    "type": "#|",
-    "named": false
-  },
-  {
-    "type": "#~",
-    "named": false
-  },
-  {
     "type": "]",
     "named": false
+  },
+  {
+    "type": "extracted_comment",
+    "named": true
+  },
+  {
+    "type": "flag_comment",
+    "named": true
   },
   {
     "type": "msgctxt",
@@ -250,5 +191,25 @@
   {
     "type": "msgstr[",
     "named": false
+  },
+  {
+    "type": "obsolete_comment",
+    "named": true
+  },
+  {
+    "type": "previous_comment",
+    "named": true
+  },
+  {
+    "type": "reference_comment",
+    "named": true
+  },
+  {
+    "type": "string",
+    "named": true
+  },
+  {
+    "type": "translator_comment",
+    "named": true
   }
 ]
