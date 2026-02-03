@@ -1,0 +1,258 @@
+[
+  {
+    "type": "comment",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "extracted_comment",
+          "named": true
+        },
+        {
+          "type": "flag_comment",
+          "named": true
+        },
+        {
+          "type": "obsolete_comment",
+          "named": true
+        },
+        {
+          "type": "previous_comment",
+          "named": true
+        },
+        {
+          "type": "reference_comment",
+          "named": true
+        },
+        {
+          "type": "translator_comment",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "extracted_comment",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "flag_comment",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "message",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "comment",
+          "named": true
+        },
+        {
+          "type": "msgctxt",
+          "named": true
+        },
+        {
+          "type": "msgid",
+          "named": true
+        },
+        {
+          "type": "msgid_plural",
+          "named": true
+        },
+        {
+          "type": "msgstr",
+          "named": true
+        },
+        {
+          "type": "msgstr_plural",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "msgctxt",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "string",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "msgid",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "string",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "msgid_plural",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "string",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "msgstr",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "string",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "msgstr_plural",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "string",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "obsolete_comment",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "previous_comment",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "reference_comment",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "source_file",
+    "named": true,
+    "root": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "comment",
+          "named": true
+        },
+        {
+          "type": "message",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "string",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "translator_comment",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": " ",
+    "named": false
+  },
+  {
+    "type": "\"",
+    "named": false
+  },
+  {
+    "type": "#",
+    "named": false
+  },
+  {
+    "type": "#,",
+    "named": false
+  },
+  {
+    "type": "#.",
+    "named": false
+  },
+  {
+    "type": "#:",
+    "named": false
+  },
+  {
+    "type": "#|",
+    "named": false
+  },
+  {
+    "type": "#~",
+    "named": false
+  },
+  {
+    "type": "]",
+    "named": false
+  },
+  {
+    "type": "msgctxt",
+    "named": false
+  },
+  {
+    "type": "msgid",
+    "named": false
+  },
+  {
+    "type": "msgid_plural",
+    "named": false
+  },
+  {
+    "type": "msgstr",
+    "named": false
+  },
+  {
+    "type": "msgstr[",
+    "named": false
+  }
+]
