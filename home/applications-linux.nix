@@ -9,6 +9,9 @@
     # Gaming
     steam
 
+    # Productivity
+    obsidian
+
     # Additional Linux desktop tools
     # Add more as needed
   ];
