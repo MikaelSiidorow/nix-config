@@ -73,8 +73,5 @@
     ++ lib.optionals (!isDarwin) [
       # AI tools
       claude-code-nix.packages.${pkgs.stdenv.hostPlatform.system}.default
-
-      # Terminal
-      ghostty
     ];
 }
