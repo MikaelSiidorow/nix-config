@@ -1,11 +1,5 @@
 # Linux-specific desktop applications
-{ pkgs, ... }:
-let
-  # Wrap Ghostty with nixGL for OpenGL support
-  ghostty-wrapped = pkgs.writeShellScriptBin "ghostty" ''
-    exec ${pkgs.nixgl.nixGLIntel}/bin/nixGLIntel ${pkgs.ghostty}/bin/ghostty "$@"
-  '';
-in
+{ pkgs, config, ... }:
 {
   home.packages = with pkgs; [
     # Communication
@@ -18,8 +12,8 @@ in
     # Productivity
     obsidian
 
-    # Terminal with nixGL wrapping
-    ghostty-wrapped
+    # Terminal with nixGL wrapping (uses config.lib.nixGL.wrap)
+    (config.lib.nixGL.wrap ghostty)
 
     # Additional Linux desktop tools
     # Add more as needed
