@@ -7,8 +7,6 @@
 {
   home.sessionVariables = {
     PNPM_HOME = "$HOME/.local/share/pnpm";
-    GPG_TTY = "$(tty)";
-    DEFAULT_USER = "$(whoami)";
   };
 
   home.sessionPath = [
@@ -41,18 +39,26 @@
       theme = "agnoster";
     };
 
+    initExtra = ''
+      # GPG TTY for signing
+      export GPG_TTY=$(tty)
+
+      # Hide user@host in agnoster prompt for local sessions
+      export DEFAULT_USER=$(whoami)
+
+      # fnm (Fast Node Manager) integration
+      eval "$(fnm env --use-on-cd --shell zsh)"
+    '';
+
     initContent = lib.mkMerge (
       # Darwin-specific nix-daemon setup
-      (lib.optionals isDarwin [
+      lib.optionals isDarwin [
         (lib.mkBefore ''
           if [[ -f /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh ]]; then
             . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
             . /nix/var/nix/profiles/default/etc/profile.d/nix.sh
           fi
         '')
-      ])
-      ++ [
-        ''eval "$(fnm env --use-on-cd --shell zsh)"''
       ]
     );
   };

@@ -2,13 +2,9 @@
 { lib, ... }:
 {
   dconf.settings = {
-    # Disable default terminal keybinding
+    # Custom keybindings and disable default terminal
     "org/gnome/settings-daemon/plugins/media-keys" = {
       terminal = lib.gvariant.mkEmptyArray lib.gvariant.type.string;
-    };
-
-    # Custom keybindings list
-    "org/gnome/settings-daemon/plugins/media-keys" = {
       custom-keybindings = [
         "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/"
       ];
