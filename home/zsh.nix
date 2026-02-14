@@ -7,6 +7,7 @@
 {
   home.sessionVariables = {
     PNPM_HOME = "$HOME/.local/share/pnpm";
+    GPG_TTY = "$(tty)";
   };
 
   home.sessionPath = [
@@ -23,6 +24,12 @@
     enableCompletion = true;
     autosuggestion.enable = true;
     syntaxHighlighting.enable = true;
+
+    shellAliases = {
+      p = "pnpm";
+      tf = "terraform";
+      bb = "bun --bun";
+    };
 
     oh-my-zsh = {
       enable = true;
