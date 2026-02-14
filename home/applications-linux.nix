@@ -3,7 +3,7 @@
 let
   # Wrap Ghostty with nixGL for OpenGL support
   ghostty-wrapped = pkgs.writeShellScriptBin "ghostty" ''
-    exec nixGLIntel ${pkgs.ghostty}/bin/ghostty "$@"
+    exec ${pkgs.nixgl.nixGLIntel}/bin/nixGLIntel ${pkgs.ghostty}/bin/ghostty "$@"
   '';
 in
 {
