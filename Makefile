@@ -79,7 +79,7 @@ ifeq ($(BUILD_CMD),darwin-rebuild)
 	nix store diff-closures /run/current-system ./result
 else
 	home-manager build --flake .#$(FLAKE_TARGET)
-	nix store diff-closures "$$(readlink ~/.local/state/nix/profiles/home-manager)" ./result
+	nix store diff-closures ~/.local/state/nix/profiles/home-manager ./result
 endif
 
 # Update flake inputs
