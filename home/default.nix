@@ -16,6 +16,7 @@
   ]
   ++ lib.optionals (!isDarwin) [
     ./applications-linux.nix
+    ./gnome.nix
   ];
 
   home = {
