@@ -7,7 +7,7 @@
     # telegram-desktop - using flatpak instead due to graphics driver issues
 
     # Gaming
-    steam
+    # steam - using apt version instead (better 32-bit lib support on Pop!_OS)
 
     # Productivity
     obsidian
