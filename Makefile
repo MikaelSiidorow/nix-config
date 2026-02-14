@@ -76,10 +76,10 @@ diff:
 	@echo "Checking changes for $(FLAKE_TARGET)..."
 ifeq ($(BUILD_CMD),darwin-rebuild)
 	$(NEEDS_SUDO) darwin-rebuild build --flake .#$(FLAKE_TARGET)
-	nvd diff /run/current-system ./result
+	nix store diff-closures /run/current-system ./result
 else
 	home-manager build --flake .#$(FLAKE_TARGET)
-	nvd diff ~/.nix-profile ./result
+	nix store diff-closures "$$(readlink ~/.local/state/nix/profiles/home-manager)" ./result
 endif
 
 # Update flake inputs
