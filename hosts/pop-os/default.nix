@@ -3,15 +3,19 @@
   config,
   pkgs,
   lib,
+  inputs,
   ...
 }:
 {
   # This is a minimal configuration for running home-manager standalone on Pop!_OS
   # We're not managing the system itself, just the user environment
 
-  # Allow unfree packages (needed for Discord, Telegram, Steam, etc.)
+  # Allow unfree packages (needed for Discord, Steam, etc.)
   nixpkgs.config.allowUnfree = true;
 
-  # Host-specific home-manager settings can go here if needed
-  # For now, most configuration is in the shared home/ directory
+  # nixGL for OpenGL support on non-NixOS Linux
+  # Wraps Nix GUI apps to use system graphics drivers
+  nixGL.packages = inputs.nixgl.packages;
+  nixGL.defaultWrapper = "mesa";
+  nixGL.installScripts = [ "mesa" ];
 }

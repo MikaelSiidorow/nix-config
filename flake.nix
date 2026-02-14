@@ -16,6 +16,12 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # OpenGL wrapper for non-NixOS Linux
+    nixgl = {
+      url = "github:nix-community/nixGL";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # Homebrew integration for macOS
     nix-homebrew.url = "github:zhaofengli-wip/nix-homebrew/main";
     homebrew-core = {
