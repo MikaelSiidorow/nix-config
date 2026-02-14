@@ -7,10 +7,10 @@ on:
     branches: ["main", "master"]
   workflow_dispatch:
 
-# Cancel in-progress runs when a new commit is pushed
+# Cancel in-progress runs when a new commit is pushed (except on main/master)
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/master' }}
 
 jobs:
   check:
