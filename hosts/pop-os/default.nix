@@ -15,7 +15,7 @@
 
   # nixGL for OpenGL support on non-NixOS Linux
   # Wraps Nix GUI apps to use system graphics drivers
-  nixGL.packages = inputs.nixgl.packages;
-  nixGL.defaultWrapper = "mesa";
-  nixGL.installScripts = [ "mesa" ];
+  targets.genericLinux.nixGL.packages = inputs.nixgl.packages;
+  targets.genericLinux.nixGL.defaultWrapper = "mesa";
+  targets.genericLinux.nixGL.installScripts = [ "mesa" ];
 }
