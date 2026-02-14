@@ -6,10 +6,9 @@
 }:
 {
   programs = {
-    # Ghostty: macOS uses programs.ghostty, Linux uses wrapped version
-    ghostty = {
-      enable = isDarwin;
-    };
+    # Ghostty: Not in nixpkgs for macOS yet
+    # macOS: install via Homebrew (see modules/darwin/homebrew.nix)
+    # Linux: uses wrapped version (see home/applications-linux.nix)
 
     vscode = {
       enable = true;
