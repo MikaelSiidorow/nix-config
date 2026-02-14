@@ -64,7 +64,7 @@
   # Platform-specific packages (NixOS/Linux only - macOS uses Homebrew)
   ++ lib.optionals (!isDarwin) [
     # AI tools
-    claude-code-nix.packages.${pkgs.system}.default
+    claude-code-nix.packages.${pkgs.stdenv.hostPlatform.system}.default
 
     # Terminal
     ghostty
