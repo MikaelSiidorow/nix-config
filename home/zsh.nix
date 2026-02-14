@@ -8,6 +8,7 @@
   home.sessionVariables = {
     PNPM_HOME = "$HOME/.local/share/pnpm";
     GPG_TTY = "$(tty)";
+    DEFAULT_USER = "$(whoami)";
   };
 
   home.sessionPath = [
