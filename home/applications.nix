@@ -1,9 +1,14 @@
 # Desktop applications - platform-agnostic
-{ pkgs, ... }:
+{
+  pkgs,
+  isDarwin ? false,
+  ...
+}:
 {
   programs = {
+    # Ghostty: macOS uses programs.ghostty, Linux uses wrapped version
     ghostty = {
-      enable = true;
+      enable = isDarwin;
     };
 
     vscode = {
