@@ -27,9 +27,12 @@ echo "experimental-features = nix-command flakes" >> ~/.config/nix/nix.conf
 # Clone and activate
 git clone https://github.com/MikaelSiidorow/nix-config.git ~/nix-config
 cd ~/nix-config
+
+# Initial bootstrap (uses latest home-manager from master branch)
+# Note: This may differ from the version pinned in flake.lock
 nix run home-manager/master -- switch --flake .#mikaelsiidorow@pop-os -b backup
 
-# Future updates
+# Future updates (uses pinned version from flake.lock)
 make switch
 ```
 

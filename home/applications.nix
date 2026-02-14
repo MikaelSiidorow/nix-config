@@ -1,9 +1,5 @@
 # Desktop applications - platform-agnostic
-{
-  pkgs,
-  isDarwin ? false,
-  ...
-}:
+{ pkgs, ... }:
 {
   programs = {
     # Ghostty: Not in nixpkgs for macOS yet

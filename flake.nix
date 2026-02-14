@@ -139,6 +139,34 @@
           ]
           ++ extraModules;
         };
+
+      # Helper function to create a home-manager standalone config
+      mkHomeConfig =
+        {
+          system,
+          hostname,
+          extraModules ? [ ],
+        }:
+        home-manager.lib.homeManagerConfiguration {
+          pkgs = nixpkgs.legacyPackages.${system};
+          extraSpecialArgs = {
+            inherit
+              self
+              inputs
+              ;
+            isDarwin = false;
+          };
+          modules = [
+            ./hosts/${hostname}
+            ./home
+            {
+              home = {
+                inherit username;
+                homeDirectory = "/home/${username}";
+              };
+            }
+          ] ++ extraModules;
+        };
     in
     {
       # Darwin (macOS) configurations
@@ -159,22 +187,9 @@
 
       # Home-manager standalone configurations (for non-NixOS systems)
       homeConfigurations = {
-        "mikaelsiidorow@pop-os" = home-manager.lib.homeManagerConfiguration {
-          pkgs = nixpkgs.legacyPackages.x86_64-linux;
-          extraSpecialArgs = {
-            inherit inputs;
-            isDarwin = false;
-          };
-          modules = [
-            ./hosts/pop-os
-            ./home
-            {
-              home = {
-                username = username;
-                homeDirectory = "/home/${username}";
-              };
-            }
-          ];
+        "mikaelsiidorow@pop-os" = mkHomeConfig {
+          system = "x86_64-linux";
+          hostname = "pop-os";
         };
       };
 

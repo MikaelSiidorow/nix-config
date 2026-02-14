@@ -17,6 +17,7 @@
   ++ lib.optionals (!isDarwin) [
     ./applications-linux.nix
     ./gnome.nix
+    ./ghostty-linux.nix
   ];
 
   home = {

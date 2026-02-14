@@ -14,8 +14,5 @@
 
     # Terminal with nixGL wrapping (uses config.lib.nixGL.wrap)
     (config.lib.nixGL.wrap ghostty)
-
-    # Additional Linux desktop tools
-    # Add more as needed
   ];
 }
