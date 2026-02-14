@@ -160,6 +160,7 @@
             inherit
               self
               inputs
+              claude-code-nix
               ;
             isDarwin = false;
           };
