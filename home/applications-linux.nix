@@ -4,7 +4,7 @@
   home.packages = with pkgs; [
     # Communication
     discord
-    telegram-desktop
+    # telegram-desktop - using flatpak instead due to graphics driver issues
 
     # Gaming
     steam
