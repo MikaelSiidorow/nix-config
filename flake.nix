@@ -165,7 +165,8 @@
                 homeDirectory = "/home/${username}";
               };
             }
-          ] ++ extraModules;
+          ]
+          ++ extraModules;
         };
     in
     {
