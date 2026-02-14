@@ -1,8 +1,8 @@
-# Desktop applications - platform-agnostic
+# macOS-specific desktop applications
 { pkgs, ... }:
 {
   programs = {
-    vscode = {
+    ghostty = {
       enable = true;
     };
   };

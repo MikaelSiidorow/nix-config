@@ -13,6 +13,7 @@
   ]
   ++ lib.optionals isDarwin [
     ./skhd.nix
+    ./applications-darwin.nix
   ]
   ++ lib.optionals (!isDarwin) [
     ./applications-linux.nix
