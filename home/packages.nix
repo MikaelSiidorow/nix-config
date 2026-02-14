@@ -2,8 +2,8 @@
 {
   pkgs,
   lib,
+  inputs,
   isDarwin ? false,
-  claude-code-nix,
   ...
 }:
 {
@@ -72,6 +72,6 @@
     # Platform-specific packages (NixOS/Linux only - macOS uses Homebrew)
     ++ lib.optionals (!isDarwin) [
       # AI tools
-      claude-code-nix.packages.${pkgs.stdenv.hostPlatform.system}.default
+      inputs.claude-code-nix.packages.${pkgs.stdenv.hostPlatform.system}.default
     ];
 }

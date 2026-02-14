@@ -76,7 +76,7 @@ cmd_list() {
 	if [[ ! -d "$worktrees_dir" ]]; then
 		log_info "No worktrees directory found"
 		echo "Run 'cwt <name>' to create your first worktree"
-		exit 0
+		return 0
 	fi
 
 	log_info "Active Claude worktrees:"
@@ -139,6 +139,17 @@ cmd_close() {
 
 	log_info "Removing worktree: $worktree_name"
 
+	# Check for uncommitted changes
+	if git -C "$worktree_dir" diff-index --quiet HEAD 2>/dev/null || ! git -C "$worktree_dir" diff-files --quiet 2>/dev/null; then
+		log_warn "Worktree has uncommitted changes that will be discarded"
+		read -p "Continue with removal? [y/N] " -n 1 -r
+		echo
+		if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+			log_info "Removal cancelled"
+			return 0
+		fi
+	fi
+
 	# Remove the worktree (--force to handle uncommitted changes)
 	if git worktree remove "$worktree_dir" --force 2>/dev/null; then
 		log_info "Worktree removed successfully"
@@ -167,32 +178,68 @@ install_dependencies() {
 	log_info "Detecting package manager..."
 
 	if [[ -f "$worktree_dir/bun.lockb" ]]; then
-		log_info "Found bun.lockb, running bun install..."
-		bun install
+		if command -v bun &>/dev/null; then
+			log_info "Found bun.lockb, running bun install..."
+			bun install
+		else
+			log_warn "Found bun.lockb but 'bun' command not found, skipping install"
+		fi
 	elif [[ -f "$worktree_dir/pnpm-lock.yaml" ]]; then
-		log_info "Found pnpm-lock.yaml, running pnpm install..."
-		pnpm install
+		if command -v pnpm &>/dev/null; then
+			log_info "Found pnpm-lock.yaml, running pnpm install..."
+			pnpm install
+		else
+			log_warn "Found pnpm-lock.yaml but 'pnpm' command not found, skipping install"
+		fi
 	elif [[ -f "$worktree_dir/yarn.lock" ]]; then
-		log_info "Found yarn.lock, running yarn install..."
-		yarn install
+		if command -v yarn &>/dev/null; then
+			log_info "Found yarn.lock, running yarn install..."
+			yarn install
+		else
+			log_warn "Found yarn.lock but 'yarn' command not found, skipping install"
+		fi
 	elif [[ -f "$worktree_dir/package-lock.json" ]]; then
-		log_info "Found package-lock.json, running npm install..."
-		npm install
+		if command -v npm &>/dev/null; then
+			log_info "Found package-lock.json, running npm install..."
+			npm install
+		else
+			log_warn "Found package-lock.json but 'npm' command not found, skipping install"
+		fi
 	elif [[ -f "$worktree_dir/package.json" ]]; then
-		log_warn "Found package.json but no lockfile, running npm install..."
-		npm install
+		if command -v npm &>/dev/null; then
+			log_warn "Found package.json but no lockfile, running npm install..."
+			npm install
+		else
+			log_warn "Found package.json but 'npm' command not found, skipping install"
+		fi
 	elif [[ -f "$worktree_dir/Cargo.lock" ]]; then
-		log_info "Found Cargo.lock, running cargo build..."
-		cargo build
+		if command -v cargo &>/dev/null; then
+			log_info "Found Cargo.lock, running cargo fetch..."
+			cargo fetch
+		else
+			log_warn "Found Cargo.lock but 'cargo' command not found, skipping fetch"
+		fi
 	elif [[ -f "$worktree_dir/go.mod" ]]; then
-		log_info "Found go.mod, running go mod download..."
-		go mod download
+		if command -v go &>/dev/null; then
+			log_info "Found go.mod, running go mod download..."
+			go mod download
+		else
+			log_warn "Found go.mod but 'go' command not found, skipping download"
+		fi
 	elif [[ -f "$worktree_dir/requirements.txt" ]]; then
-		log_info "Found requirements.txt, running pip install..."
-		pip install -r requirements.txt
+		if command -v pip &>/dev/null; then
+			log_warn "Found requirements.txt, running pip install (consider using a virtualenv)..."
+			pip install -r requirements.txt
+		else
+			log_warn "Found requirements.txt but 'pip' command not found, skipping install"
+		fi
 	elif [[ -f "$worktree_dir/Pipfile.lock" ]]; then
-		log_info "Found Pipfile.lock, running pipenv install..."
-		pipenv install
+		if command -v pipenv &>/dev/null; then
+			log_info "Found Pipfile.lock, running pipenv install..."
+			pipenv install
+		else
+			log_warn "Found Pipfile.lock but 'pipenv' command not found, skipping install"
+		fi
 	else
 		log_warn "No recognized package manager lockfile found"
 	fi

@@ -99,7 +99,7 @@
                 useUserPackages = true;
                 backupFileExtension = "backup";
                 extraSpecialArgs = {
-                  inherit inputs claude-code-nix;
+                  inherit inputs;
                   isDarwin = true;
                 };
                 users.${username} = import ./home;
@@ -137,7 +137,7 @@
                 useUserPackages = true;
                 backupFileExtension = "backup";
                 extraSpecialArgs = {
-                  inherit inputs claude-code-nix;
+                  inherit inputs;
                   isDarwin = false;
                 };
                 users.${username} = import ./home;
@@ -160,7 +160,6 @@
             inherit
               self
               inputs
-              claude-code-nix
               ;
             isDarwin = false;
           };
