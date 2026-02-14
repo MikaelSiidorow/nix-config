@@ -64,6 +64,7 @@
 
       # Development tools
       shellcheck
+      shfmt
       mergiraf
 
       # Security
