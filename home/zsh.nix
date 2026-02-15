@@ -29,6 +29,9 @@
       tf = "terraform";
       bb = "bun --bun";
 
+      # Trash
+      tp = "trash-put";
+
       # Claude
       c = "claude";
       cco = "claude --continue";
