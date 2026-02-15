@@ -29,7 +29,8 @@
       tf = "terraform";
       bb = "bun --bun";
 
-      # Trash
+      # Safety
+      rm = "rm -i";
       tp = "trash-put";
 
       # Claude
