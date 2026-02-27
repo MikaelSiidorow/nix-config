@@ -31,7 +31,7 @@
     }
   },
   {
-    "type": "message",
+    "type": "comments",
     "named": true,
     "fields": {},
     "children": {
@@ -40,6 +40,21 @@
       "types": [
         {
           "type": "comment",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "message",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "comments",
           "named": true
         },
         {
@@ -141,6 +156,25 @@
     }
   },
   {
+    "type": "obsolete_entry",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "comments",
+          "named": true
+        },
+        {
+          "type": "obsolete_comment",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "source_file",
     "named": true,
     "root": true,
@@ -154,7 +188,7 @@
           "named": true
         },
         {
-          "type": "obsolete_comment",
+          "type": "obsolete_entry",
           "named": true
         }
       ]

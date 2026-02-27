@@ -10,16 +10,27 @@ module.exports = grammar({
 
   rules: {
     source_file: ($) =>
-      repeat(choice($.message, $.obsolete_comment)),
+      repeat(choice($.message, $.obsolete_entry)),
 
     message: ($) =>
       seq(
-        repeat($.comment),
+        optional($.comments),
         optional($.msgctxt),
         $.msgid,
         optional($.msgid_plural),
         choice($.msgstr, repeat1($.msgstr_plural)),
       ),
+
+    // Wrapper node for comments preceding a message or obsolete entry.
+    // Marked as a commutative parent in mergiraf so that adding different
+    // reference comments on both sides of a merge resolves cleanly.
+    comments: ($) => repeat1($.comment),
+
+    // Obsolete entries (#~ lines) can be preceded by regular comments like
+    // #: references. Without this wrapper, the parser fails when it sees
+    // a comment followed by #~ instead of msgid.
+    obsolete_entry: ($) =>
+      prec.right(seq(optional($.comments), repeat1($.obsolete_comment))),
 
     comment: ($) =>
       choice(
@@ -30,21 +41,21 @@ module.exports = grammar({
         $.previous_comment,
       ),
 
-    // Each comment type is a single token (including its trailing newline)
-    // so the lexer handles them atomically. The newline inside token() is
-    // matched literally (extras don't apply inside token()).
+    // Each comment type is a single token. Trailing newlines are NOT included
+    // in the token (they're consumed by extras) so that mergiraf's @virtual_line@
+    // splitting doesn't trigger, and commutative parent rendering works correctly.
     translator_comment: (_$) =>
-      token(seq("#", optional(seq(" ", /[^\n]*/)), /\r?\n/)),
+      token(seq("#", optional(seq(" ", /[^\n]*/)))),
     extracted_comment: (_$) =>
-      token(seq("#.", optional(seq(" ", /[^\n]*/)), /\r?\n/)),
+      token(seq("#.", optional(seq(" ", /[^\n]*/)))),
     reference_comment: (_$) =>
-      token(seq("#:", optional(seq(" ", /[^\n]*/)), /\r?\n/)),
+      token(seq("#:", optional(seq(" ", /[^\n]*/)))),
     flag_comment: (_$) =>
-      token(seq("#,", optional(seq(" ", /[^\n]*/)), /\r?\n/)),
+      token(seq("#,", optional(seq(" ", /[^\n]*/)))),
     previous_comment: (_$) =>
-      token(seq("#|", optional(seq(" ", /[^\n]*/)), /\r?\n/)),
+      token(seq("#|", optional(seq(" ", /[^\n]*/)))),
     obsolete_comment: (_$) =>
-      token(seq("#~", optional(seq(" ", /[^\n]*/)), /\r?\n/)),
+      token(seq("#~", optional(seq(" ", /[^\n]*/)))),
 
     // Keyword blocks: the keyword followed by one or more strings.
     // Newlines between continuation strings are consumed by extras.

@@ -68,8 +68,12 @@ rustPlatform.buildRustPackage {
                     atomic_nodes: vec!["string"],
                     commutative_parents: vec![
                         CommutativeParent::without_delimiters("source_file", "\n\n"),
+                        CommutativeParent::without_delimiters("comments", "\n"),
                     ],
-                    signatures: vec![signature("message", vec![vec![ChildKind("msgid")]])],
+                    signatures: vec![
+                        signature("message", vec![vec![ChildKind("msgctxt")], vec![ChildKind("msgid")]]),
+                        signature("obsolete_entry", vec![vec![ChildKind("obsolete_comment")]]),
+                    ],
                     injections: None,
                     flattened_nodes: &[],
                     comment_nodes: &[
