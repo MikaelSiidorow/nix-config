@@ -1,5 +1,5 @@
 # Multi-host Nix configuration Makefile
-# Supports nix-darwin (macOS) and home-manager (Linux standalone)
+# Supports nix-darwin, NixOS, and standalone home-manager
 
 # Detect platform
 HOSTNAME := $(shell hostname -s)
@@ -7,7 +7,7 @@ UNAME := $(shell uname -s)
 
 # darwin-rebuild auto-resolves darwinConfigurations.$(scutil --get LocalHostName)
 # when no flake attr is specified, so we pass `.` and let it pick.
-# home-manager has no equivalent default, so we pass the full target.
+# NixOS and home-manager have no equivalent default, so we pass full targets.
 ifeq ($(UNAME),Darwin)
 	DARWIN_REBUILD := $(shell command -v darwin-rebuild 2>/dev/null || true)
 	ifeq ($(DARWIN_REBUILD),)
@@ -17,6 +17,12 @@ ifeq ($(UNAME),Darwin)
 	endif
 	FLAKE_TARGET := .
 	DISPLAY_TARGET := darwinConfigurations.$(HOSTNAME)
+	HOST_KIND := darwin
+else ifeq ($(HOSTNAME),nixos-laptop)
+	BUILD_CMD := sudo nixos-rebuild
+	FLAKE_TARGET := .\#nixos-laptop
+	DISPLAY_TARGET := nixosConfigurations.nixos-laptop
+	HOST_KIND := nixos
 else
 	HOME_MANAGER := $(shell command -v home-manager 2>/dev/null || true)
 	ifeq ($(HOME_MANAGER),)
@@ -26,6 +32,7 @@ else
 	endif
 	FLAKE_TARGET := .\#mikaelsiidorow@pop-os
 	DISPLAY_TARGET := $(FLAKE_TARGET)
+	HOST_KIND := home
 endif
 
 # Default target - show help
@@ -74,7 +81,10 @@ check:
 .PHONY: diff
 diff:
 	@echo "Checking changes for $(DISPLAY_TARGET)..."
-ifeq ($(UNAME),Darwin)
+ifeq ($(HOST_KIND),darwin)
+	$(BUILD_CMD) build --flake $(FLAKE_TARGET)
+	nix store diff-closures /run/current-system ./result
+else ifeq ($(HOST_KIND),nixos)
 	$(BUILD_CMD) build --flake $(FLAKE_TARGET)
 	nix store diff-closures /run/current-system ./result
 else
@@ -142,17 +152,19 @@ popos:
 # Show system generations
 .PHONY: history
 history:
-ifeq ($(UNAME),Darwin)
-	sudo nix-env --list-generations --profile /nix/var/nix/profiles/system
-else
+ifeq ($(HOST_KIND),home)
 	home-manager generations
+else
+	sudo nix-env --list-generations --profile /nix/var/nix/profiles/system
 endif
 
 # Rollback to previous generation
 .PHONY: rollback
 rollback:
-ifeq ($(UNAME),Darwin)
+ifeq ($(HOST_KIND),darwin)
 	$(BUILD_CMD) rollback
+else ifeq ($(HOST_KIND),nixos)
+	$(BUILD_CMD) switch --rollback
 else
 	home-manager switch --rollback
 endif

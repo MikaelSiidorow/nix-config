@@ -11,8 +11,7 @@ let
   isLinux = !isDarwin;
   isGenericLinux = config.targets.genericLinux.enable or false;
 
-  launcherKeybindingPath =
-    "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/launcher/";
+  launcherKeybindingPath = "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/launcher/";
 
   buildNodeExtension =
     {
@@ -190,7 +189,7 @@ in
     settings = linux.vicinae.settings;
   };
 
-  dconf.settings = lib.mkIf isLinux {
+  dconf.settings = lib.mkIf isGenericLinux {
     "org/gnome/desktop/wm/keybindings" = {
       switch-input-source = lib.gvariant.mkEmptyArray lib.gvariant.type.string;
       switch-input-source-backward = [ "<Shift><Super>space" ];
@@ -215,9 +214,9 @@ in
     };
   };
 
-  home.packages = lib.optionals (
-    isLinux && machine.linux.vicinae.enableGnomeExtension
-  ) [ pkgs.gnomeExtensions.vicinae ];
+  home.packages = lib.optionals (isLinux && machine.linux.vicinae.enableGnomeExtension) [
+    pkgs.gnomeExtensions.vicinae
+  ];
 
   home.file =
     lib.optionalAttrs isDarwin {

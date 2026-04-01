@@ -3,6 +3,7 @@
   pkgs,
   config,
   isDarwin ? false,
+  isNixOS ? false,
   ...
 }:
 let
@@ -19,7 +20,7 @@ in
 {
   programs.zed-editor = {
     enable = true;
-    package = if isDarwin then pkgs.zed-editor else config.lib.nixGL.wrap pkgs.zed-editor;
+    package = if isDarwin || isNixOS then pkgs.zed-editor else config.lib.nixGL.wrap pkgs.zed-editor;
     extraPackages =
       with pkgs;
       [

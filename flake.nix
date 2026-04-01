@@ -20,6 +20,12 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    plasma-manager = {
+      url = "github:nix-community/plasma-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.home-manager.follows = "home-manager";
+    };
+
     # Declarative secret management
     sops-nix = {
       url = "github:Mic92/sops-nix";
@@ -77,6 +83,13 @@
       url = "github:dan-online/opencode-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # CachyOS kernel for NixOS (performance-tuned, BORE scheduler)
+    nix-cachyos-kernel = {
+      url = "github:xddxdd/nix-cachyos-kernel/release";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
   };
 
   outputs =
@@ -94,6 +107,8 @@
       codex-cli-nix,
       opencode-nix,
       nur,
+      plasma-manager,
+      nix-cachyos-kernel,
       ...
     }@inputs:
     let
@@ -254,6 +269,7 @@
               nixpkgs.overlays = [
                 mergirafOverlay
                 nur.overlays.default
+                nix-cachyos-kernel.overlays.pinned
               ];
             }
 
@@ -267,9 +283,11 @@
                 useGlobalPkgs = true;
                 useUserPackages = true;
                 backupFileExtension = "backup";
+                sharedModules = [ plasma-manager.homeModules.plasma-manager ];
                 extraSpecialArgs = {
                   inherit inputs pkgs-unstable hostname;
                   isDarwin = false;
+                  isNixOS = true;
                 };
                 users.${username} = import ./home;
               };
@@ -303,6 +321,7 @@
               hostname
               ;
             isDarwin = false;
+            isNixOS = false;
           };
           modules = [
             ./hosts/${hostname}
@@ -353,13 +372,69 @@
         }) supportedSystems
       );
 
-      # NixOS configurations (uncomment when ready)
-      # nixosConfigurations = {
-      #   "nixos-laptop" = mkNixosSystem {
-      #     system = "x86_64-linux";  # or "aarch64-linux" for ARM
-      #     hostname = "nixos-laptop";
-      #   };
-      # };
+      # NixOS configurations
+      nixosConfigurations = {
+        "nixos-laptop" = mkNixosSystem {
+          system = "x86_64-linux";
+          hostname = "nixos-laptop";
+        };
+
+        # VM variant for testing — run: nix build .#nixosConfigurations.nixos-laptop-vm.config.system.build.vm
+        # Then: ./result/bin/run-nixos-laptop-vm
+        "nixos-laptop-vm" = mkNixosSystem {
+          system = "x86_64-linux";
+          hostname = "nixos-laptop";
+          extraModules = [
+            (
+              {
+                lib,
+                pkgs,
+                modulesPath,
+                ...
+              }:
+              {
+                imports = [ "${modulesPath}/virtualisation/qemu-vm.nix" ];
+
+                # Skip real hardware config (LUKS, UUIDs) — VM handles its own
+                disabledModules = [ ./hosts/nixos-laptop/hardware-configuration.nix ];
+
+                # VM settings
+                virtualisation = {
+                  memorySize = 4096;
+                  cores = 4;
+                  diskSize = 8192;
+                  resolution = {
+                    x = 1920;
+                    y = 1080;
+                  };
+                  qemu.options = [
+                    "-display gtk"
+                  ];
+                };
+
+                # Placeholder filesystems for evaluation (overridden by VM module)
+                fileSystems."/" = lib.mkForce {
+                  device = "/dev/disk/by-label/nixos";
+                  fsType = "ext4";
+                };
+
+                # ponytail: the VM previews Plasma, not alternate physical kernels.
+                specialisation = lib.mkForce { };
+
+                # Set a password for VM login (password: "test")
+                users.users.${username}.initialHashedPassword =
+                  "$y$j9T$63FtiwzFlRRMEGBFJ/QNd.$pXlcmADD4dqHv.3/k.78sBE9oBKFp75p9HPmRfoRcT.";
+
+                # Auto-login to Plasma in the disposable VM.
+                services.displayManager.autoLogin = {
+                  enable = true;
+                  user = username;
+                };
+              }
+            )
+          ];
+        };
+      };
 
       # Home-manager standalone configurations (for non-NixOS systems)
       homeConfigurations = {
