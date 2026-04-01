@@ -1,13 +1,20 @@
 # Linux-specific desktop applications
-{ pkgs, config, ... }:
+{
+  pkgs,
+  config,
+  lib,
+  isNixOS ? false,
+  ...
+}:
+let
+  # On NixOS, graphics drivers are handled natively — no wrapping needed.
+  # On non-NixOS (Pop!_OS), nixGL wraps apps to use system graphics drivers.
+  wrapGraphics = pkg: if isNixOS then pkg else config.lib.nixGL.wrap pkg;
+in
 {
   home.packages = with pkgs; [
     # Communication
     vesktop
-    # telegram-desktop - using flatpak instead due to graphics driver issues
-
-    # Gaming
-    # steam - using apt version; wrapper below strips Nix PATH to avoid glibc conflicts
 
     # Productivity
     obsidian
@@ -18,34 +25,39 @@
 
     # Document processing
     texliveFull
+    inkscape
 
     # Screenshot
     flameshot
 
-    # Terminal with nixGL wrapping (uses config.lib.nixGL.wrap)
-    (config.lib.nixGL.wrap ghostty)
+    # Terminal with graphics wrapping (only needed on non-NixOS)
+    (wrapGraphics ghostty)
   ];
 
-  # Wrap apt Steam to use system PATH (Nix coreutils link to newer glibc than Pop!_OS ships)
-  xdg.desktopEntries.steam = {
-    name = "Steam";
-    comment = "Application for managing and playing games on Steam";
-    exec = ''env PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games" LD_LIBRARY_PATH="" /usr/games/steam %U'';
-    icon = "steam";
-    terminal = false;
-    type = "Application";
-    categories = [
-      "Game"
-      "Network"
-    ];
-    mimeType = [
-      "x-scheme-handler/steam"
-      "x-scheme-handler/steamlink"
-    ];
-  };
-
+  # Zed editor
   programs.zed-editor = {
     enable = true;
-    package = config.lib.nixGL.wrap pkgs.zed-editor;
+    package = wrapGraphics pkgs.zed-editor;
+  };
+
+  # Steam desktop entry — only needed on Pop!_OS where Steam is installed via apt.
+  # On NixOS, Steam is managed via programs.steam in the system config.
+  xdg.desktopEntries = lib.mkIf (!isNixOS) {
+    steam = {
+      name = "Steam";
+      comment = "Application for managing and playing games on Steam";
+      exec = ''env -u LD_LIBRARY_PATH -u LIBGL_DRIVERS_PATH -u LIBVA_DRIVERS_PATH -u __EGL_VENDOR_LIBRARY_FILENAMES -u GBM_BACKENDS_PATH -u VK_ICD_FILENAMES -u GIO_EXTRA_MODULES PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games" /usr/games/steam %U'';
+      icon = "steam";
+      terminal = false;
+      type = "Application";
+      categories = [
+        "Game"
+        "Network"
+      ];
+      mimeType = [
+        "x-scheme-handler/steam"
+        "x-scheme-handler/steamlink"
+      ];
+    };
   };
 }

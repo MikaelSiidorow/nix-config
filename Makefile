@@ -14,6 +14,10 @@ else ifeq ($(HOSTNAME),pop-os)
 	FLAKE_TARGET := mikaelsiidorow@pop-os
 	BUILD_CMD := home-manager
 	NEEDS_SUDO :=
+else ifeq ($(HOSTNAME),nixos-laptop)
+	FLAKE_TARGET := nixos-laptop
+	BUILD_CMD := nixos-rebuild
+	NEEDS_SUDO := sudo
 else
 	# Fallback: try to detect by OS
 	ifeq ($(UNAME),Darwin)
@@ -77,6 +81,9 @@ diff:
 ifeq ($(BUILD_CMD),darwin-rebuild)
 	$(NEEDS_SUDO) darwin-rebuild build --flake .#$(FLAKE_TARGET)
 	nix store diff-closures /run/current-system ./result
+else ifeq ($(BUILD_CMD),nixos-rebuild)
+	sudo nixos-rebuild build --flake .#$(FLAKE_TARGET)
+	nix store diff-closures /run/current-system ./result
 else
 	home-manager build --flake .#$(FLAKE_TARGET)
 	nix store diff-closures ~/.local/state/nix/profiles/home-manager ./result
@@ -121,10 +128,10 @@ popos:
 # Show system generations
 .PHONY: history
 history:
-ifeq ($(BUILD_CMD),darwin-rebuild)
-	sudo nix-env --list-generations --profile /nix/var/nix/profiles/system
-else
+ifeq ($(BUILD_CMD),home-manager)
 	home-manager generations
+else
+	sudo nix-env --list-generations --profile /nix/var/nix/profiles/system
 endif
 
 # Rollback to previous generation
@@ -132,6 +139,8 @@ endif
 rollback:
 ifeq ($(BUILD_CMD),darwin-rebuild)
 	sudo darwin-rebuild rollback
+else ifeq ($(BUILD_CMD),nixos-rebuild)
+	sudo nixos-rebuild switch --rollback
 else
 	home-manager generations | head -2 | tail -1 | awk '{print $$7}' | xargs home-manager switch --generation
 endif

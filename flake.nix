@@ -48,6 +48,19 @@
       url = "github:dan-online/opencode-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # Zap application launcher
+    zap = {
+      url = "github:mikaelsiidorow/zap";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # CachyOS kernel for NixOS (performance-tuned, BORE scheduler)
+    nix-cachyos-kernel = {
+      url = "github:xddxdd/nix-cachyos-kernel/release";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
   };
 
   outputs =
@@ -62,6 +75,8 @@
       homebrew-cmux,
       claude-code-nix,
       opencode-nix,
+      zap,
+      nix-cachyos-kernel,
       ...
     }@inputs:
     let
@@ -148,7 +163,12 @@
           };
           modules = [
             # Custom package overlays
-            { nixpkgs.overlays = [ mergirafOverlay ]; }
+            {
+              nixpkgs.overlays = [
+                mergirafOverlay
+                nix-cachyos-kernel.overlays.pinned
+              ];
+            }
 
             # Host-specific configuration
             ./hosts/${hostname}
@@ -163,6 +183,7 @@
                 extraSpecialArgs = {
                   inherit inputs;
                   isDarwin = false;
+                  isNixOS = true;
                 };
                 users.${username} = import ./home;
               };
@@ -186,6 +207,7 @@
               inputs
               ;
             isDarwin = false;
+            isNixOS = false;
           };
           modules = [
             ./hosts/${hostname}
@@ -230,13 +252,60 @@
           }) systems
         );
 
-      # NixOS configurations (uncomment when ready)
-      # nixosConfigurations = {
-      #   "nixos-laptop" = mkNixosSystem {
-      #     system = "x86_64-linux";  # or "aarch64-linux" for ARM
-      #     hostname = "nixos-laptop";
-      #   };
-      # };
+      # NixOS configurations
+      nixosConfigurations = {
+        "nixos-laptop" = mkNixosSystem {
+          system = "x86_64-linux";
+          hostname = "nixos-laptop";
+        };
+
+        # VM variant for testing — run: nix build .#nixosConfigurations.nixos-laptop-vm.config.system.build.vm
+        # Then: ./result/bin/run-nixos-laptop-vm
+        "nixos-laptop-vm" = mkNixosSystem {
+          system = "x86_64-linux";
+          hostname = "nixos-laptop";
+          extraModules = [
+            (
+              { lib, pkgs, modulesPath, ... }:
+              {
+                imports = [ "${modulesPath}/virtualisation/qemu-vm.nix" ];
+
+                # Skip real hardware config (LUKS, UUIDs) — VM handles its own
+                disabledModules = [ ./hosts/nixos-laptop/hardware-configuration.nix ];
+
+                # VM settings
+                virtualisation = {
+                  memorySize = 4096;
+                  cores = 4;
+                  diskSize = 8192;
+                  resolution = {
+                    x = 1920;
+                    y = 1080;
+                  };
+                  qemu.options = [
+                    "-display gtk"
+                  ];
+                };
+
+                # Placeholder filesystems for evaluation (overridden by VM module)
+                fileSystems."/" = lib.mkForce {
+                  device = "/dev/disk/by-label/nixos";
+                  fsType = "ext4";
+                };
+
+                # Set a password for VM login (password: "test")
+                users.users.${username}.initialHashedPassword = "$y$j9T$63FtiwzFlRRMEGBFJ/QNd.$pXlcmADD4dqHv.3/k.78sBE9oBKFp75p9HPmRfoRcT.";
+
+                # Auto-login in VM for convenience
+                services.greetd.settings.default_session = lib.mkForce {
+                  command = "uwsm start hyprland-uwsm.desktop";
+                  user = username;
+                };
+              }
+            )
+          ];
+        };
+      };
 
       # Home-manager standalone configurations (for non-NixOS systems)
       homeConfigurations = {
