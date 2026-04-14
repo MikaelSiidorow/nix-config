@@ -405,6 +405,38 @@
           alias glp='_git_log_prettily'
           alias gtl='gtl(){ git tag --sort=-v:refname -n --list "''${1}*" }; noglob gtl'
 
+          # Sandbox wrappers for AI coding tools
+          ${
+            if isDarwin then
+              ''
+                claude() { claude-sandbox -- command claude "$@"; }
+                codex() { claude-sandbox -- command codex "$@"; }
+              ''
+            else
+              ''
+                claude() {
+                  firejail --noprofile \
+                    --whitelist="$(pwd)" \
+                    --whitelist=~/.claude \
+                    --whitelist=~/.claude.json \
+                    --whitelist=~/.cache \
+                    --whitelist=~/.config/gh \
+                    --whitelist=~/.gitconfig \
+                    --whitelist=~/.config/git \
+                    -- command claude "$@"
+                }
+                codex() {
+                  firejail --noprofile \
+                    --whitelist="$(pwd)" \
+                    --whitelist=~/.cache \
+                    --whitelist=~/.config/gh \
+                    --whitelist=~/.gitconfig \
+                    --whitelist=~/.config/git \
+                    -- command codex "$@"
+                }
+              ''
+          }
+
           # GPG TTY for signing
           export GPG_TTY=$(tty)
 

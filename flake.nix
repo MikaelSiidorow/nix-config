@@ -37,6 +37,11 @@
       flake = false;
     };
 
+    # Sandbox for AI coding tools (macOS sandbox-exec wrapper)
+    claude-code-sandbox = {
+      url = "github:neko-kai/claude-code-sandbox";
+    };
+
     # Nix User Repository (Firefox extensions, etc.)
     nur = {
       url = "github:nix-community/NUR";

@@ -128,6 +128,13 @@
       # AI tools
       inputs.claude-code-nix.packages.${pkgs.stdenv.hostPlatform.system}.default
     ]
+    # AI sandbox: sandbox-exec on macOS, firejail on Linux
+    ++ lib.optionals isDarwin [
+      inputs.claude-code-sandbox.packages.${pkgs.stdenv.hostPlatform.system}.default
+    ]
+    ++ lib.optionals (!isDarwin) [
+      pkgs.firejail
+    ]
     # Platform-specific packages (NixOS/Linux only - macOS uses Homebrew)
     ++ lib.optionals (!isDarwin) [
       inputs.opencode-nix.packages.${pkgs.stdenv.hostPlatform.system}.default
