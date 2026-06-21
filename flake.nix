@@ -138,6 +138,7 @@
       mkDarwinSystem =
         {
           system,
+          hostname ? null,
           extraModules ? [ ],
         }:
         let
@@ -195,7 +196,7 @@
                 useUserPackages = true;
                 backupFileExtension = "backup";
                 extraSpecialArgs = {
-                  inherit inputs pkgs-unstable;
+                  inherit inputs pkgs-unstable hostname;
                   isDarwin = true;
                 };
                 users.${username} = import ./home;
@@ -245,7 +246,7 @@
                 useUserPackages = true;
                 backupFileExtension = "backup";
                 extraSpecialArgs = {
-                  inherit inputs pkgs-unstable;
+                  inherit inputs pkgs-unstable hostname;
                   isDarwin = false;
                 };
                 users.${username} = import ./home;
@@ -277,6 +278,7 @@
               self
               inputs
               pkgs-unstable
+              hostname
               ;
             isDarwin = false;
           };
@@ -296,7 +298,7 @@
     {
       # Darwin (macOS) configurations
       darwinConfigurations = builtins.mapAttrs (
-        _: system: mkDarwinSystem { inherit system; }
+        hostname: system: mkDarwinSystem { inherit system hostname; }
       ) darwinHosts;
 
       # Standalone package for testing: nix build .#packages.aarch64-darwin.mergiraf

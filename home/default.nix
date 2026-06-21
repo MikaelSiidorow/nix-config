@@ -13,6 +13,7 @@
     ./zsh.nix
     ./scripts.nix
     ./applications.nix
+    ./launcher.nix
     ./nix-index.nix
     ./firefox.nix
     ./claude-code.nix
