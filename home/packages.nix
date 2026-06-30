@@ -66,6 +66,14 @@
   # Global treefmt config — used as fallback when no repo-local treefmt.toml exists
   home.file.".config/treefmt/treefmt.toml".source = ./treefmt.toml;
 
+  # Podman machine config (macOS): enable Rosetta so linux/amd64 images run.
+  home.file.".config/containers/containers.conf" = lib.mkIf isDarwin {
+    text = ''
+      [machine]
+      rosetta = true
+    '';
+  };
+
   home.packages =
     with pkgs;
     [
@@ -101,6 +109,10 @@
       postgresql_18
       redis
       sqlite
+
+      # Containers
+      podman
+      podman-compose
 
       # Cloud
       google-cloud-sdk
