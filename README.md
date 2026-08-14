@@ -13,6 +13,10 @@ Configured hosts:
 | `hestia`                | x86_64-linux   | NixOS home server       |
 | `mikaelsiidorow@pop-os` | x86_64-linux   | home-manager standalone |
 
+The repository also builds a NETGEAR R6220 OpenWrt firmware image and a
+Dewclaw deployment scaffold. See the
+[R6220 setup guide](openwrt/r6220/README.md) before building or flashing it.
+
 ## Quick Start
 
 ### macOS (fresh machine)
@@ -137,6 +141,14 @@ make brew-upgrade # Explicit Homebrew update + upgrade on macOS
 make deploy-hestia # Sync and activate the Hestia NixOS configuration
 make check        # Validate flake
 make fmt          # Format code
+```
+
+Router-specific outputs are built on x86_64 Linux:
+
+```bash
+nix build .#r6220-firmware
+nix build .#r6220-deploy
+nix run .#deploy-r6220
 ```
 
 On macOS `make switch` passes `--flake .` and lets `darwin-rebuild` resolve to `darwinConfigurations.$(hostname -s)`. Run `make help` for the full list.

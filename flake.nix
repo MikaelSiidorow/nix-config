@@ -77,6 +77,18 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Build reproducible OpenWrt firmware images from upstream ImageBuilder releases.
+    openwrt-imagebuilder = {
+      url = "github:astro/nix-openwrt-imagebuilder";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # Apply semi-declarative OpenWrt UCI configuration over SSH.
+    dewclaw = {
+      url = "github:MakiseKurisu/dewclaw";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
   };
 
   outputs =
@@ -92,6 +104,8 @@
       homebrew-cask,
       homebrew-cmux,
       nur,
+      openwrt-imagebuilder,
+      dewclaw,
       ...
     }@inputs:
     let
@@ -268,13 +282,21 @@
       packages = builtins.listToAttrs (
         map (system: {
           name = system;
-          value = {
-            mergiraf =
-              let
-                pkgs = import nixpkgs { inherit system; };
-              in
-              pkgs.callPackage ./pkgs/mergiraf-custom { };
-          };
+          value =
+            let
+              pkgs = import nixpkgs { inherit system; };
+            in
+            {
+              mergiraf = pkgs.callPackage ./pkgs/mergiraf-custom { };
+            }
+            // lib.optionalAttrs (system == "x86_64-linux") {
+              r6220-firmware = pkgs.callPackage ./openwrt/r6220/firmware.nix {
+                inherit openwrt-imagebuilder;
+              };
+              r6220-deploy = pkgs.callPackage dewclaw {
+                configuration = ./openwrt/r6220/config.nix;
+              };
+            };
         }) supportedSystems
       );
 
@@ -307,6 +329,9 @@
           name = system;
           value = {
             home-manager = mkApp "${home-manager.packages.${system}.home-manager}/bin/home-manager" "Run the locked Home Manager CLI";
+          }
+          // lib.optionalAttrs (system == "x86_64-linux") {
+            deploy-r6220 = mkApp "${self.packages.${system}.r6220-deploy}/bin/deploy-r6220" "Deploy the R6220 OpenWrt configuration";
           }
           // lib.optionalAttrs (lib.hasSuffix "darwin" system) {
             darwin-rebuild = mkApp "${nix-darwin.packages.${system}.darwin-rebuild}/bin/darwin-rebuild" "Run the locked nix-darwin rebuild CLI";
