@@ -13,9 +13,10 @@ Configured hosts:
 | `hestia`                | x86_64-linux   | NixOS home server       |
 | `mikaelsiidorow@pop-os` | x86_64-linux   | home-manager standalone |
 
-The repository also builds a NETGEAR R6220 OpenWrt firmware image and a
-Dewclaw deployment scaffold. See the
-[R6220 setup guide](openwrt/r6220/README.md) before building or flashing it.
+The repository also builds OpenWrt firmware and Dewclaw deployment outputs for
+the NETGEAR R6220 router and TP-Link Archer C6 v2 access point. See the
+[R6220 guide](openwrt/r6220/README.md) and
+[Archer C6 guide](openwrt/archer-c6-v2/README.md) before deploying them.
 
 ## Quick Start
 
@@ -149,6 +150,10 @@ Router-specific outputs are built on x86_64 Linux:
 nix build .#r6220-firmware
 nix build .#r6220-deploy
 nix run .#deploy-r6220
+
+nix build .#archer-c6-v2-firmware
+nix build .#archer-c6-v2-deploy
+nix run .#deploy-archer-c6-v2
 ```
 
 On macOS `make switch` passes `--flake .` and lets `darwin-rebuild` resolve to `darwinConfigurations.$(hostname -s)`. Run `make help` for the full list.

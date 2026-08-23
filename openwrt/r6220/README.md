@@ -4,9 +4,8 @@ This directory has two deliberately separate pieces:
 
 - `firmware.nix` builds an OpenWrt 25.12.5 image for the
   `netgear_r6220` profile. It owns the OpenWrt release and package set.
-- `config.nix` is a safe Dewclaw scaffold for runtime UCI configuration. It
-  retains the generated network, radio, firewall, and DHCP configuration until
-  those values have been captured from the real router and translated.
+- `config.nix` owns the captured network topology and disabled-radio state.
+  DHCP, firewall, LuCI, SSH, and other untouched UCI packages remain retained.
 
 Build the firmware and Dewclaw deployment on `x86_64-linux`. The upstream
 ImageBuilder contains Linux x86-64 executables, so these outputs do not build
@@ -150,11 +149,11 @@ This transition stays within OpenWrt 25.12.5 and preserves the initial
 configuration. For a future major OpenWrt upgrade, review the release notes and
 expect to use `sysupgrade -n` followed by a fresh declarative deployment.
 
-## 6. Complete and deploy the Dewclaw configuration
+## 6. Review and deploy the Dewclaw configuration
 
-`config.nix` initially retains all important UCI packages, so it is only a
-scaffold. Complete its network, wireless, firewall, and DHCP TODOs using the
-capture before treating it as authoritative.
+The official OpenWrt 25.12.5 board-generated network and wireless state has
+been captured and translated into `config.nix`. The radios remain disabled and
+the R6220 remains the router at `192.168.1.1` with a DHCP WAN.
 
 Build the deployment script without contacting the router:
 
@@ -183,9 +182,9 @@ Do not put secrets in `firmware.nix`, `files/`, or a Nix string used to build
 the firmware. They would be stored as plaintext in `/nix/store`.
 
 Runtime secrets should be added to `secrets/secrets.yaml` with `sops`, then
-referenced through Dewclaw's `_secret` values. The commented examples in
-`config.nix` show the intended wiring. Secrets are decrypted on the deploying
-machine and interpolated during deployment rather than firmware construction.
+referenced through Dewclaw's `_secret` values. Secrets are decrypted on the
+deploying machine and interpolated during deployment rather than firmware
+construction.
 
 ## Updating
 

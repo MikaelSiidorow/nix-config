@@ -296,6 +296,12 @@
               r6220-deploy = pkgs.callPackage dewclaw {
                 configuration = ./openwrt/r6220/config.nix;
               };
+              archer-c6-v2-firmware = pkgs.callPackage ./openwrt/archer-c6-v2/firmware.nix {
+                inherit openwrt-imagebuilder;
+              };
+              archer-c6-v2-deploy = pkgs.callPackage dewclaw {
+                configuration = ./openwrt/archer-c6-v2/config.nix;
+              };
             };
         }) supportedSystems
       );
@@ -332,6 +338,7 @@
           }
           // lib.optionalAttrs (system == "x86_64-linux") {
             deploy-r6220 = mkApp "${self.packages.${system}.r6220-deploy}/bin/deploy-r6220" "Deploy the R6220 OpenWrt configuration";
+            deploy-archer-c6-v2 = mkApp "${self.packages.${system}.archer-c6-v2-deploy}/bin/deploy-archer-c6-v2" "Deploy the Archer C6 v2 OpenWrt configuration";
           }
           // lib.optionalAttrs (lib.hasSuffix "darwin" system) {
             darwin-rebuild = mkApp "${nix-darwin.packages.${system}.darwin-rebuild}/bin/darwin-rebuild" "Run the locked nix-darwin rebuild CLI";

@@ -15,36 +15,102 @@
       apply = lib.mkForce "";
     };
 
-    # Retain every hardware-sensitive package until the official image has
-    # booted and its generated UCI state has been captured. Move packages from
-    # this list into uci.settings only after filling in the TODOs below.
+    # Keep configuration that we have not intentionally made declarative.
     uci.retain = [
+      "attendedsysupgrade"
       "dhcp"
       "dropbear"
       "firewall"
       "luci"
-      "network"
       "rpcd"
       "system"
-      "ubootenv"
+      "ubihealthd"
       "uhttpd"
-      "wireless"
     ];
 
     uci.settings = {
-      # TODO: Translate the captured `uci show network` output. In particular,
-      # preserve the R6220's generated DSA port names and MAC addresses.
-      # network = { ... };
+      # Captured from the official OpenWrt 25.12.5 first boot. The generated
+      # DUID, ULA prefix, DSA port names, and radio paths belong to this device.
+      network = {
+        device = [
+          {
+            name = "br-lan";
+            type = "bridge";
+            ports = [
+              "lan1"
+              "lan2"
+              "lan3"
+              "lan4"
+            ];
+          }
+        ];
 
-      # TODO: Translate the captured `uci show wireless` output. Preserve both
-      # generated radio sections, their paths, bands, and country settings.
-      # Put passwords in SOPS and use: key._secret = "openwrt_r6220_wifi";
-      # wireless = { ... };
+        globals.globals = {
+          dhcp_default_duid = "0004e494a05858a94c929460ea3e3f47fab9";
+          ula_prefix = "fd4e:b7fd:9cf8::/48";
+          packet_steering = "1";
+        };
 
-      # TODO: Add firewall and DHCP only after their complete generated state
-      # has been translated. Partial ownership can remove required defaults.
-      # firewall = { ... };
-      # dhcp = { ... };
+        interface = {
+          loopback = {
+            device = "lo";
+            proto = "static";
+            ipaddr = [ "127.0.0.1/8" ];
+          };
+          lan = {
+            device = "br-lan";
+            proto = "static";
+            ipaddr = [ "192.168.1.1/24" ];
+            ip6assign = "60";
+          };
+          wan = {
+            device = "wan";
+            proto = "dhcp";
+          };
+          wan6 = {
+            device = "wan";
+            proto = "dhcpv6";
+          };
+        };
+      };
+
+      wireless = {
+        wifi-device = {
+          radio0 = {
+            type = "mac80211";
+            path = "1e140000.pcie/pci0000:00/0000:00:02.0/0000:02:00.0";
+            band = "2g";
+            channel = "1";
+            htmode = "HT20";
+          };
+          radio1 = {
+            type = "mac80211";
+            path = "1e140000.pcie/pci0000:00/0000:00:00.0/0000:01:00.0";
+            band = "5g";
+            channel = "36";
+            htmode = "VHT80";
+          };
+        };
+
+        wifi-iface = {
+          default_radio0 = {
+            device = "radio0";
+            network = "lan";
+            mode = "ap";
+            ssid = "OpenWrt";
+            encryption = "none";
+            disabled = "1";
+          };
+          default_radio1 = {
+            device = "radio1";
+            network = "lan";
+            mode = "ap";
+            ssid = "OpenWrt";
+            encryption = "none";
+            disabled = "1";
+          };
+        };
+      };
     };
 
     # TODO: After adding encrypted router secrets to secrets/secrets.yaml:
