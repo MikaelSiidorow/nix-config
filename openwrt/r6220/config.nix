@@ -18,7 +18,6 @@
     # Keep configuration that we have not intentionally made declarative.
     uci.retain = [
       "attendedsysupgrade"
-      "dhcp"
       "dropbear"
       "luci"
       "rpcd"
@@ -28,6 +27,73 @@
     ];
 
     uci.settings = {
+      # dnsmasq remains the LAN resolver but sends every upstream query to the
+      # local Mullvad DoH proxy. The canary domains discourage automatic
+      # browser DoH and iCloud Private Relay from bypassing router DNS.
+      dhcp = {
+        dnsmasq = [
+          {
+            domainneeded = "1";
+            boguspriv = "1";
+            filterwin2k = "0";
+            localise_queries = "1";
+            rebind_protection = "1";
+            rebind_localhost = "1";
+            local = "/lan/";
+            domain = "lan";
+            expandhosts = "1";
+            nonegcache = "0";
+            cachesize = "1000";
+            authoritative = "1";
+            readethers = "1";
+            leasefile = "/tmp/dhcp.leases";
+            resolvfile = "/tmp/resolv.conf.d/resolv.conf.auto";
+            nonwildcard = "1";
+            localservice = "1";
+            ednspacket_max = "1232";
+            filter_aaaa = "0";
+            filter_a = "0";
+            noresolv = "1";
+            server = [
+              "/mask.icloud.com/"
+              "/mask-h2.icloud.com/"
+              "/use-application-dns.net/"
+              "127.0.0.1#5053"
+            ];
+          }
+        ];
+
+        dhcp = {
+          lan = {
+            interface = "lan";
+            start = "100";
+            limit = "150";
+            leasetime = "12h";
+            dhcpv4 = "server";
+            dhcpv6 = "server";
+            ra = "server";
+            ra_slaac = "1";
+            ra_flags = [
+              "managed-config"
+              "other-config"
+            ];
+          };
+          wan = {
+            interface = "wan";
+            ignore = "1";
+          };
+        };
+
+        odhcpd.odhcpd = {
+          maindhcp = "0";
+          leasefile = "/tmp/odhcpd.leases";
+          leasetrigger = "/usr/sbin/odhcpd-update";
+          loglevel = "4";
+          piodir = "/tmp/odhcpd-piodir";
+          hostsdir = "/tmp/hosts";
+        };
+      };
+
       # Captured from the working firewall after enabling hardware flow
       # offloading. Dewclaw replaces declared UCI packages in full.
       firewall = {
@@ -172,6 +238,37 @@
             target = "ACCEPT";
           }
         ];
+      };
+
+      "https-dns-proxy" = {
+        main.config = {
+          canary_domains_icloud = "1";
+          canary_domains_mozilla = "1";
+
+          # dnsmasq is declared above; do not mutate it from the init script.
+          dnsmasq_config_update = "";
+          force_dns = "0";
+          notrack_dns = "1";
+          force_dns_port = [
+            "53"
+            "853"
+          ];
+          force_dns_src_interface = [ "lan" ];
+          procd_trigger_wan6 = "0";
+          heartbeat_domain = "heartbeat.mossdef.org";
+          heartbeat_sleep_timeout = "10";
+          heartbeat_wait_timeout = "10";
+          user = "nobody";
+          group = "nogroup";
+          listen_addr = "127.0.0.1";
+          force_ip_family = "auto";
+        };
+
+        "https-dns-proxy".mullvad = {
+          bootstrap_dns = "194.242.2.2";
+          resolver_url = "https://base.dns.mullvad.net/dns-query";
+          listen_port = "5053";
+        };
       };
 
       # Captured from the official OpenWrt 25.12.5 first boot. The generated

@@ -18,6 +18,8 @@ openwrt-imagebuilder.lib.build (
     # until its OpenWrt 25.12/apk support is ready.
     packages = [
       "htop"
+      "https-dns-proxy"
+      "luci-app-https-dns-proxy"
       "luci-ssl"
       "tcpdump"
     ];

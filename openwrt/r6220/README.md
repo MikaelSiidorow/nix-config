@@ -119,10 +119,10 @@ The result contains several artifacts. Use:
 - `*-factory.img` only when moving from NETGEAR OEM firmware to OpenWrt.
 - `*-sysupgrade.bin` when OpenWrt is already installed.
 
-The image currently adds `luci-ssl`, `htop`, and `tcpdump`. Its only custom UCI
-setting is the non-secret hostname `r6220`. It also installs the personal SSH
-public key from `openwrt/files`; private keys never enter the repository or Nix
-store.
+The image adds `luci-ssl`, `htop`, `tcpdump`, and the lightweight HTTPS DNS
+proxy with its LuCI application. Its bootstrap UCI setting is the non-secret
+hostname `r6220`. It also installs the personal SSH public key from
+`openwrt/files`; private keys never enter the repository or Nix store.
 
 ## 5. Move from official OpenWrt to the Nix-built image
 
@@ -158,7 +158,8 @@ The official OpenWrt 25.12.5 board-generated network and wireless state has
 been captured and translated into `config.nix`. The radios remain disabled and
 the R6220 remains the router at `192.168.1.1` with a DHCP WAN. Software and
 hardware flow offloading are enabled for full WAN throughput; do not combine
-them with SQM/QoS.
+them with SQM/QoS. Dnsmasq forwards upstream queries through Mullvad Base DoH
+at `https://base.dns.mullvad.net/dns-query`; DNS interception remains disabled.
 
 Build the deployment script without contacting the router:
 
