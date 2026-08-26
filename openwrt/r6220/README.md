@@ -4,8 +4,9 @@ This directory has two deliberately separate pieces:
 
 - `firmware.nix` builds an OpenWrt 25.12.5 image for the
   `netgear_r6220` profile. It owns the OpenWrt release and package set.
-- `config.nix` owns the captured network topology and disabled-radio state.
-  DHCP, firewall, LuCI, SSH, and other untouched UCI packages remain retained.
+- `config.nix` owns the captured network topology, firewall with hardware flow
+  offloading, and disabled-radio state. DHCP, LuCI, SSH, and other untouched
+  UCI packages remain retained.
 
 Build the firmware and Dewclaw deployment on `x86_64-linux`. The upstream
 ImageBuilder contains Linux x86-64 executables, so these outputs do not build
@@ -155,7 +156,9 @@ expect to use `sysupgrade -n` followed by a fresh declarative deployment.
 
 The official OpenWrt 25.12.5 board-generated network and wireless state has
 been captured and translated into `config.nix`. The radios remain disabled and
-the R6220 remains the router at `192.168.1.1` with a DHCP WAN.
+the R6220 remains the router at `192.168.1.1` with a DHCP WAN. Software and
+hardware flow offloading are enabled for full WAN throughput; do not combine
+them with SQM/QoS.
 
 Build the deployment script without contacting the router:
 

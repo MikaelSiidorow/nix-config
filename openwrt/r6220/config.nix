@@ -20,7 +20,6 @@
       "attendedsysupgrade"
       "dhcp"
       "dropbear"
-      "firewall"
       "luci"
       "rpcd"
       "system"
@@ -29,6 +28,152 @@
     ];
 
     uci.settings = {
+      # Captured from the working firewall after enabling hardware flow
+      # offloading. Dewclaw replaces declared UCI packages in full.
+      firewall = {
+        defaults = [
+          {
+            input = "REJECT";
+            output = "ACCEPT";
+            forward = "REJECT";
+            synflood_protect = "1";
+            flow_offloading = "1";
+            flow_offloading_hw = "1";
+          }
+        ];
+
+        zone = [
+          {
+            name = "lan";
+            network = [ "lan" ];
+            input = "ACCEPT";
+            output = "ACCEPT";
+            forward = "ACCEPT";
+          }
+          {
+            name = "wan";
+            network = [
+              "wan"
+              "wan6"
+            ];
+            input = "REJECT";
+            output = "ACCEPT";
+            forward = "DROP";
+            masq = "1";
+            mtu_fix = "1";
+          }
+        ];
+
+        forwarding = [
+          {
+            src = "lan";
+            dest = "wan";
+          }
+        ];
+
+        rule = [
+          {
+            name = "Allow-DHCP-Renew";
+            src = "wan";
+            proto = "udp";
+            dest_port = "68";
+            target = "ACCEPT";
+            family = "ipv4";
+          }
+          {
+            name = "Allow-Ping";
+            src = "wan";
+            proto = "icmp";
+            icmp_type = "echo-request";
+            family = "ipv4";
+            target = "ACCEPT";
+          }
+          {
+            name = "Allow-IGMP";
+            src = "wan";
+            proto = "igmp";
+            family = "ipv4";
+            target = "ACCEPT";
+          }
+          {
+            name = "Allow-DHCPv6";
+            src = "wan";
+            proto = "udp";
+            dest_port = "546";
+            family = "ipv6";
+            target = "ACCEPT";
+          }
+          {
+            name = "Allow-MLD";
+            src = "wan";
+            proto = "icmp";
+            src_ip = "fe80::/10";
+            icmp_type = [
+              "130/0"
+              "131/0"
+              "132/0"
+              "143/0"
+            ];
+            family = "ipv6";
+            target = "ACCEPT";
+          }
+          {
+            name = "Allow-ICMPv6-Input";
+            src = "wan";
+            proto = "icmp";
+            icmp_type = [
+              "echo-request"
+              "echo-reply"
+              "destination-unreachable"
+              "packet-too-big"
+              "time-exceeded"
+              "bad-header"
+              "unknown-header-type"
+              "router-solicitation"
+              "neighbour-solicitation"
+              "router-advertisement"
+              "neighbour-advertisement"
+            ];
+            limit = "1000/sec";
+            family = "ipv6";
+            target = "ACCEPT";
+          }
+          {
+            name = "Allow-ICMPv6-Forward";
+            src = "wan";
+            dest = "*";
+            proto = "icmp";
+            icmp_type = [
+              "echo-request"
+              "echo-reply"
+              "destination-unreachable"
+              "packet-too-big"
+              "time-exceeded"
+              "bad-header"
+              "unknown-header-type"
+            ];
+            limit = "1000/sec";
+            family = "ipv6";
+            target = "ACCEPT";
+          }
+          {
+            name = "Allow-IPSec-ESP";
+            src = "wan";
+            dest = "lan";
+            proto = "esp";
+            target = "ACCEPT";
+          }
+          {
+            name = "Allow-ISAKMP";
+            src = "wan";
+            dest = "lan";
+            dest_port = "500";
+            proto = "udp";
+            target = "ACCEPT";
+          }
+        ];
+      };
+
       # Captured from the official OpenWrt 25.12.5 first boot. The generated
       # DUID, ULA prefix, DSA port names, and radio paths belong to this device.
       network = {
