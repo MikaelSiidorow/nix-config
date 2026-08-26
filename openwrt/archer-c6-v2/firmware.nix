@@ -17,5 +17,8 @@ openwrt-imagebuilder.lib.build (
     # The Archer has only 8 MB of flash. Keep the official package set and
     # install no optional services on this access point.
     packages = [ ];
+
+    # Public bootstrap access only; private keys never enter the Nix store.
+    files = ../files;
   }
 )

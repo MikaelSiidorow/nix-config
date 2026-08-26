@@ -119,7 +119,9 @@ The result contains several artifacts. Use:
 - `*-sysupgrade.bin` when OpenWrt is already installed.
 
 The image currently adds `luci-ssl`, `htop`, and `tcpdump`. Its only custom UCI
-setting is the non-secret hostname `r6220`.
+setting is the non-secret hostname `r6220`. It also installs the personal SSH
+public key from `openwrt/files`; private keys never enter the repository or Nix
+store.
 
 ## 5. Move from official OpenWrt to the Nix-built image
 

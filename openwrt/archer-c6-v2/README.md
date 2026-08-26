@@ -26,7 +26,9 @@ nix build .#archer-c6-v2-deploy
 
 The firmware result contains factory and sysupgrade images. Since OpenWrt is
 already installed, use only the `*-sysupgrade.bin` image for future upgrades.
-Validate it on the device with `sysupgrade -T` before flashing.
+Validate it on the device with `sysupgrade -T` before flashing. The image also
+installs the personal SSH public key from `openwrt/files`; private keys never
+enter the repository or Nix store.
 
 ## Wi-Fi secret prerequisite
 

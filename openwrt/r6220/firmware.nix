@@ -24,6 +24,12 @@ openwrt-imagebuilder.lib.build (
 
     # Only public, non-secret bootstrap state belongs in the firmware image.
     # Files included here are copied into the world-readable Nix store.
-    files = ./files;
+    files = pkgs.symlinkJoin {
+      name = "r6220-openwrt-files";
+      paths = [
+        ../files
+        ./files
+      ];
+    };
   }
 )
