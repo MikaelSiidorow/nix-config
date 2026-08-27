@@ -121,7 +121,7 @@ The result contains several artifacts. Use:
 
 The image adds `luci-ssl`, `htop`, `tcpdump`, and the lightweight HTTPS DNS
 proxy with its LuCI application. Its bootstrap UCI setting is the non-secret
-hostname `r6220`. It also installs the personal SSH public key from
+hostname `cerberus`. It also installs the personal SSH public key from
 `openwrt/files`; private keys never enter the repository or Nix store.
 
 ## 5. Move from official OpenWrt to the Nix-built image
@@ -160,6 +160,9 @@ the R6220 remains the router at `192.168.1.1` with a DHCP WAN. Software and
 hardware flow offloading are enabled for full WAN throughput; do not combine
 them with SQM/QoS. Dnsmasq forwards upstream queries through Mullvad Base DoH
 at `https://base.dns.mullvad.net/dns-query`; DNS interception remains disabled.
+The LAN uses `home.arpa`, with `cerberus.home.arpa` at `192.168.1.1`,
+`hermes.home.arpa` at `192.168.1.2`, and a fixed Hestia lease and record at
+`192.168.1.170`.
 
 Build the deployment script without contacting the router:
 

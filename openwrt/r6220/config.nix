@@ -21,7 +21,6 @@
       "dropbear"
       "luci"
       "rpcd"
-      "system"
       "ubihealthd"
       "uhttpd"
     ];
@@ -39,8 +38,8 @@
             localise_queries = "1";
             rebind_protection = "1";
             rebind_localhost = "1";
-            local = "/lan/";
-            domain = "lan";
+            local = "/home.arpa/";
+            domain = "home.arpa";
             expandhosts = "1";
             nonegcache = "0";
             cachesize = "1000";
@@ -81,6 +80,27 @@
           wan = {
             interface = "wan";
             ignore = "1";
+          };
+        };
+
+        host.hestia = {
+          name = "hestia";
+          mac = "70:85:c2:a4:50:c2";
+          ip = "192.168.1.170";
+        };
+
+        domain = {
+          cerberus = {
+            name = "cerberus.home.arpa";
+            ip = "192.168.1.1";
+          };
+          hermes = {
+            name = "hermes.home.arpa";
+            ip = "192.168.1.2";
+          };
+          hestia = {
+            name = "hestia.home.arpa";
+            ip = "192.168.1.170";
           };
         };
 
@@ -313,6 +333,39 @@
             device = "wan";
             proto = "dhcpv6";
           };
+        };
+      };
+
+      system = {
+        system = [
+          {
+            hostname = "cerberus";
+            timezone = "GMT0";
+            zonename = "UTC";
+            ttylogin = "0";
+            log_size = "128";
+            urandom_seed = "0";
+            compat_version = "1.1";
+          }
+        ];
+
+        timeserver.ntp = {
+          enabled = "1";
+          enable_server = "0";
+          server = [
+            "0.openwrt.pool.ntp.org"
+            "1.openwrt.pool.ntp.org"
+            "2.openwrt.pool.ntp.org"
+            "3.openwrt.pool.ntp.org"
+          ];
+        };
+
+        led.led_wan = {
+          name = "wan";
+          sysfs = "green:wan";
+          trigger = "netdev";
+          mode = "link tx rx";
+          dev = "wan";
         };
       };
 

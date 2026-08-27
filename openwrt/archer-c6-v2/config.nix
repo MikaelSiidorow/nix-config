@@ -23,7 +23,6 @@
       "firewall"
       "luci"
       "rpcd"
-      "system"
       "ubootenv"
       "uhttpd"
     ];
@@ -100,8 +99,8 @@
             localise_queries = "1";
             rebind_protection = "1";
             rebind_localhost = "1";
-            local = "/lan/";
-            domain = "lan";
+            local = "/home.arpa/";
+            domain = "home.arpa";
             expandhosts = "1";
             nonegcache = "0";
             cachesize = "1000";
@@ -139,6 +138,45 @@
           loglevel = "4";
           piodir = "/tmp/odhcpd-piodir";
           hostsdir = "/tmp/hosts";
+        };
+      };
+
+      system = {
+        system = [
+          {
+            hostname = "hermes";
+            timezone = "GMT0";
+            zonename = "UTC";
+            ttylogin = "0";
+            log_size = "128";
+            urandom_seed = "0";
+          }
+        ];
+
+        timeserver.ntp = {
+          enabled = "1";
+          enable_server = "0";
+          server = [
+            "0.openwrt.pool.ntp.org"
+            "1.openwrt.pool.ntp.org"
+            "2.openwrt.pool.ntp.org"
+            "3.openwrt.pool.ntp.org"
+          ];
+        };
+
+        led = {
+          led_lan = {
+            name = "LAN";
+            sysfs = "green:lan";
+            trigger = "switch0";
+            port_mask = "0x3c";
+          };
+          led_wan = {
+            name = "WAN";
+            sysfs = "green:wan";
+            trigger = "switch0";
+            port_mask = "0x02";
+          };
         };
       };
 
