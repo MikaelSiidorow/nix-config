@@ -36,6 +36,10 @@
         friendly_name = "bathroom_thermometer";
         description = "Bathroom temperature and humidity sensor";
       };
+      devices."0x8c73dafffef5d7c4" = {
+        friendly_name = "ac_leak_sensor";
+        description = "Air conditioner water leak sensor";
+      };
 
       serial = {
         port = "/dev/serial/by-id/usb-SONOFF_SONOFF_Dongle_Plus_MG24_ea7c162edc9aef1186d2b79061ce3355-if00-port0";
