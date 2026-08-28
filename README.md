@@ -140,6 +140,9 @@ make update-fast  # Update fast-moving app inputs
 make upgrade      # Update + switch
 make brew-upgrade # Explicit Homebrew update + upgrade on macOS
 make deploy-hestia # Sync and activate the Hestia NixOS configuration
+make deploy-cerberus # Deploy the Cerberus router configuration
+make deploy-hermes # Deploy the Hermes access-point configuration
+make build-router-firmware # Build both router firmware images
 make check        # Validate flake
 make fmt          # Format code
 ```
@@ -147,13 +150,13 @@ make fmt          # Format code
 Router-specific outputs are built on x86_64 Linux:
 
 ```bash
-nix build .#r6220-firmware
-nix build .#r6220-deploy
-nix run .#deploy-r6220
+nix build .#cerberus-firmware
+nix build .#cerberus-deploy
+nix run .#cerberus-deploy
 
-nix build .#archer-c6-v2-firmware
-nix build .#archer-c6-v2-deploy
-nix run .#deploy-archer-c6-v2
+nix build .#hermes-firmware
+nix build .#hermes-deploy
+nix run .#hermes-deploy
 ```
 
 On macOS `make switch` passes `--flake .` and lets `darwin-rebuild` resolve to `darwinConfigurations.$(hostname -s)`. Run `make help` for the full list.

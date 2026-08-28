@@ -110,7 +110,7 @@ state is declared.
 On the Pop!\_OS/Linux machine:
 
 ```bash
-nix build .#r6220-firmware
+nix build .#cerberus-firmware
 find -L result -maxdepth 1 -type f -print
 ```
 
@@ -167,13 +167,13 @@ The LAN uses `home.arpa`, with `cerberus.home.arpa` at `192.168.1.1`,
 Build the deployment script without contacting the router:
 
 ```bash
-nix build .#r6220-deploy
+nix build .#cerberus-deploy
 ```
 
 After reviewing the generated configuration, deploy it with:
 
 ```bash
-nix run .#deploy-r6220
+nix run .#cerberus-deploy
 ```
 
 Dewclaw snapshots the overlay before applying changes. It confirms the new
@@ -200,10 +200,10 @@ construction.
 1. Change the explicit `release` in `firmware.nix` only after the corresponding
    release exists in the pinned ImageBuilder input.
 2. Update the input with `nix flake update openwrt-imagebuilder`.
-3. Build and inspect `.#r6220-firmware`.
+3. Build and inspect `.#cerberus-firmware`.
 4. Back up the router and validate the image with `sysupgrade -T`.
 5. Flash by Ethernet.
-6. Re-run `nix run .#deploy-r6220` after completing the Dewclaw configuration.
+6. Re-run `nix run .#cerberus-deploy` after completing the Dewclaw configuration.
 
 Always retain the previous working sysupgrade image and the NETGEAR OEM image
 for recovery.

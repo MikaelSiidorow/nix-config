@@ -21,8 +21,8 @@ router capture.
 Build these outputs on x86_64 Linux:
 
 ```bash
-nix build .#archer-c6-v2-firmware
-nix build .#archer-c6-v2-deploy
+nix build .#hermes-firmware
+nix build .#hermes-deploy
 ```
 
 The firmware result contains factory and sysupgrade images. Since OpenWrt is
@@ -47,7 +47,7 @@ Builds do not decrypt the secret. Deployment does, and fails before changing
 the router if the key is missing:
 
 ```bash
-nix run .#deploy-archer-c6-v2
+nix run .#hermes-deploy
 ```
 
 Keep a wired connection available for the first declarative deployment. The
