@@ -1,4 +1,18 @@
-{ lib, ... }:
+{ config, lib, ... }:
+let
+  namedSectionNames =
+    package:
+    lib.concatMap (sections: if builtins.isAttrs sections then builtins.attrNames sections else [ ]) (
+      builtins.attrValues package
+    );
+
+  sectionNamesAreUnique =
+    package:
+    let
+      names = namedSectionNames package;
+    in
+    builtins.length names == builtins.length (lib.unique names);
+in
 {
   openwrt.r6220 = {
     deploy = {
@@ -14,6 +28,13 @@
       copy = lib.mkForce "";
       apply = lib.mkForce "";
     };
+
+    # UCI section names share one namespace per package, even across section
+    # types. Catch conflicts during evaluation instead of on the router.
+    assertions = lib.mapAttrsToList (packageName: package: {
+      assertion = sectionNamesAreUnique package;
+      message = "UCI package ${packageName} contains duplicate named sections";
+    }) config.openwrt.r6220.uci.settings;
 
     # Keep configuration that we have not intentionally made declarative.
     uci.retain = [
@@ -98,7 +119,7 @@
             name = "hermes.home.arpa";
             ip = "192.168.1.2";
           };
-          hestia = {
+          hestia_dns = {
             name = "hestia.home.arpa";
             ip = "192.168.1.170";
           };
