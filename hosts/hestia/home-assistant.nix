@@ -1,4 +1,5 @@
 {
+  config,
   inputs,
   pkgs,
   ...
@@ -26,6 +27,9 @@ in
 
     config = {
       default_config = { };
+      "automation ui" = "!include automations.yaml";
+      "scene ui" = "!include scenes.yaml";
+      "script ui" = "!include scripts.yaml";
       homeassistant = {
         name = "Home";
         time_zone = "Europe/Helsinki";
@@ -33,6 +37,18 @@ in
       };
     };
   };
+
+  # Keep configuration.yaml declarative while allowing Home Assistant to
+  # manage automations, scenes, and scripts created through the UI.
+  systemd.tmpfiles.rules =
+    let
+      configDir = config.services.home-assistant.configDir;
+    in
+    [
+      "f ${configDir}/automations.yaml 0600 hass hass -"
+      "f ${configDir}/scenes.yaml 0600 hass hass -"
+      "f ${configDir}/scripts.yaml 0600 hass hass -"
+    ];
 
   networking.firewall.interfaces.enp31s0.allowedTCPPorts = [ 8123 ];
 }
