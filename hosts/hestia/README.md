@@ -84,6 +84,12 @@ http://ha.home.arpa      -> 127.0.0.1:8123
 http://zigbee.home.arpa  -> 127.0.0.1:8080
 ```
 
+Home Assistant 2026.8 and newer stores its HTTP server configuration in
+`.storage` and ignores `http:` in `configuration.yaml` after the one-time YAML
+migration. Configure **Trust X-Forwarded-For** and the trusted proxy
+`127.0.0.1/32` under **Settings -> System -> Network**. Confirm the trial
+configuration before its five-minute rollback timer expires.
+
 Ports 8123 and 8080 deliberately remain open during the initial rollout. Once
 the proxy works from every required client, bind both upstream services to
 loopback and remove those ports from the LAN firewall.
