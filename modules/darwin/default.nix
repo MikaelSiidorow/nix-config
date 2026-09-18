@@ -21,6 +21,7 @@ in
   ];
 
   environment.systemPackages = [
+    pkgs-unstable.herdr
     pkgs-unstable.notion-app
     scrollReverser
     pkgs.vim

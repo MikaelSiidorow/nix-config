@@ -1,9 +1,40 @@
 # macOS system defaults
 {
   pkgs,
+  pkgs-unstable,
   username,
   ...
 }:
+let
+  # Herdr is a terminal UI; give the Dock an app that launches it in Ghostty.
+  # Avoid -e: Ghostty 1.3.1 on macOS also opens its path arguments as files.
+  herdrLauncher = pkgs.writeShellScript "herdr-launcher" ''
+    exec /usr/bin/open -na /Applications/Ghostty.app --args \
+      --working-directory="$HOME" --quit-after-last-window-closed=true \
+      --initial-command="/bin/zsh -lc 'exec ${pkgs-unstable.herdr}/bin/herdr'"
+  '';
+  herdrApp = pkgs.runCommand "herdr-app" { } ''
+    mkdir -p "$out/Applications/Herdr.app/Contents/MacOS"
+    mkdir -p "$out/Applications/Herdr.app/Contents/Resources"
+    # Official assets/logo.png from herdrdev/herdr at 7df919d00e5bf8f6ed43a1781e81340cc0bbce8d, converted to ICNS.
+    cp ${./icons/herdr.icns} "$out/Applications/Herdr.app/Contents/Resources/herdr.icns"
+    ln -s ${herdrLauncher} "$out/Applications/Herdr.app/Contents/MacOS/Herdr"
+    cat > "$out/Applications/Herdr.app/Contents/Info.plist" <<'EOF'
+    <?xml version="1.0" encoding="UTF-8"?>
+    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+    <plist version="1.0">
+    <dict>
+      <key>CFBundleName</key><string>Herdr</string>
+      <key>CFBundleIdentifier</key><string>local.herdr-launcher</string>
+      <key>CFBundleExecutable</key><string>Herdr</string>
+      <key>CFBundleIconFile</key><string>herdr.icns</string>
+      <key>CFBundlePackageType</key><string>APPL</string>
+      <key>LSUIElement</key><true/>
+    </dict>
+    </plist>
+    EOF
+  '';
+in
 {
   system.defaults = {
     NSGlobalDomain.AppleICUForce24HourTime = true;
@@ -38,6 +69,9 @@
         }
         {
           app = "/Applications/cmux.app";
+        }
+        {
+          app = "${herdrApp}/Applications/Herdr.app";
         }
         {
           app = "${pkgs.zed-editor}/Applications/Zed.app";
